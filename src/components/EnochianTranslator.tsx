@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertCircle, Check, Copy } from 'lucide-react'
 import { toast } from 'sonner'
+import { Separator } from './ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -68,6 +69,7 @@ export default function EnochianTranslator() {
   >({})
   const [selectedWord, setSelectedWord] = useState<string | null>(null)
   const [phraseMatches, setPhraseMatches] = useState<Record<string, string>>({})
+  const [symbolsExpanded, setSymbolsExpanded] = useState(false)
 
   // Use the custom dictionary hook
   const { data: translator, isLoading, error } = useEnochianDictionary()
@@ -121,7 +123,10 @@ export default function EnochianTranslator() {
     // Get first word for analysis if available
     const firstEnochianWord = getFirstWordForAnalysis(result.translationText)
     setWordToAnalyze(firstEnochianWord)
-    setSelectedWord(null)
+
+    // Set the first word as selected by default
+    const firstInputWord = debouncedInput.trim().split(/\s+/)[0]
+    setSelectedWord(firstInputWord)
   }, [debouncedInput, translator])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -146,7 +151,10 @@ export default function EnochianTranslator() {
     // Get first word for analysis if available
     const firstEnochianWord = getFirstWordForAnalysis(result.translationText)
     setWordToAnalyze(firstEnochianWord)
-    setSelectedWord(null)
+
+    // Set the first word as selected by default
+    const firstInputWord = input.trim().split(/\s+/)[0]
+    setSelectedWord(firstInputWord)
   }, [input, translator])
 
   const handleCopy = (text: string) => {
@@ -447,64 +455,8 @@ export default function EnochianTranslator() {
 
           <CardContent>
             <div className="space-y-6">
-              {/* Words Display */}
-              <div>
-                <h3 className="text-sm font-medium mb-2">Words:</h3>
-                <div className="relative">
-                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
-                    {renderAnnotatedTranslation()}
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
-                    onClick={() => handleCopy(translationResult)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Phonetic Display */}
-              <div>
-                <h3 className="text-sm font-medium mb-2">Phonetic:</h3>
-                <div className="relative">
-                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
-                    <span>{phoneticResult}</span>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
-                    onClick={() => handleCopy(phoneticResult)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Symbol Display */}
-              <div>
-                <h3 className="text-sm font-medium mb-2">Symbols:</h3>
-                <div className="relative">
-                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
-                    <span className="text-xl tracking-wide">
-                      {symbolResult}
-                    </span>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
-                    onClick={() => handleCopy(symbolResult)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
               {/* Translation Details */}
-              <div className="mt-5 pt-4 border-t">
+              <div>
                 <div className="text-sm font-medium mb-3">
                   Translation Statistics:
                 </div>
@@ -590,13 +542,73 @@ export default function EnochianTranslator() {
                 </div>
               </div>
 
+              <Separator />
+
               {/* Root Analysis */}
-              <div className="w-full mt-3 border-t pt-3">
+              <div className="w-full">
                 <h4 className="text-sm font-medium mb-2">
                   Enochian Root Analysis:
                 </h4>
                 <div className="bg-accent/30 rounded-md p-4 border break-words overflow-auto">
                   {renderRootAnalysis()}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Words Display */}
+              <div>
+                <h3 className="text-sm font-medium mb-2">Words:</h3>
+                <div className="relative">
+                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
+                    {renderAnnotatedTranslation()}
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
+                    onClick={() => handleCopy(translationResult)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Phonetic Display */}
+              <div>
+                <h3 className="text-sm font-medium mb-2">Phonetic:</h3>
+                <div className="relative">
+                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
+                    <span>{phoneticResult}</span>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
+                    onClick={() => handleCopy(phoneticResult)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Symbol Display */}
+              <div>
+                <h3 className="text-sm font-medium mb-2">Symbols:</h3>
+                <div className="relative">
+                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
+                    <span className="text-xl tracking-wide">
+                      {symbolResult}
+                    </span>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
+                    onClick={() => handleCopy(symbolResult)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>

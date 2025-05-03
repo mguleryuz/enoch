@@ -12,6 +12,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -64,15 +70,60 @@ function Index() {
                   it was purportedly the language used by angels.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
-                  <div className="p-2 bg-accent rounded-md text-center">
-                    <strong>Writing System:</strong> 21 letters
-                  </div>
-                  <div className="p-2 bg-accent rounded-md text-center">
-                    <strong>Word Order:</strong> VSO
-                  </div>
-                  <div className="p-2 bg-accent rounded-md text-center">
-                    <strong>Structure:</strong> Agglutinative
-                  </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="p-2 bg-accent rounded-md text-center cursor-help">
+                          <strong>Writing System:</strong> 21 letters
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          Enochian uses a unique alphabet of 21 characters, each
+                          with its own phonetic value and mystical significance.
+                          The letters have distinctive shapes often resembling
+                          modified Roman or Greek letters.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="p-2 bg-accent rounded-md text-center cursor-help">
+                          <strong>Word Order:</strong> VSO
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          VSO (Verb-Subject-Object) means that in Enochian
+                          sentences, the verb typically comes first, followed by
+                          the subject and then the object. This differs from
+                          English's standard SVO (Subject-Verb-Object) pattern.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="p-2 bg-accent rounded-md text-center cursor-help">
+                          <strong>Structure:</strong> Agglutinative
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          Agglutinative languages form words by joining
+                          morphemes (word elements) together. In Enochian,
+                          complex words are created by combining simpler
+                          elements, with each element retaining its meaning and
+                          form.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             </CardContent>

@@ -803,8 +803,8 @@ export class Translator {
       { prefix: 'anti', fullPrefix: 'anti' },
     ]
 
-    // Use OL- as the Enochian negation prefix (common in Enochian texts)
-    const enochianNegationPrefix = 'OL'
+    // Use G- as the Enochian negation prefix (common in Enochian texts)
+    const enochianNegationPrefix = 'G'
 
     // Check if word starts with any negation prefix
     for (const { prefix, fullPrefix } of negationPrefixes) {

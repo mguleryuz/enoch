@@ -269,7 +269,7 @@ export default function EnochianTranslator() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
-                    className={`cursor-pointer rounded px-2 py-1 mx-0.5 border bg-purple-100 text-purple-800 border-purple-300 font-medium ${
+                    className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border bg-purple-100 text-purple-800 border-purple-300 font-medium ${
                       selectedWord === phrase ? 'ring-2 ring-primary' : ''
                     }`}
                     onClick={() => {
@@ -305,6 +305,9 @@ export default function EnochianTranslator() {
             </TooltipProvider>,
           )
 
+          // Add a space after each phrase
+          result.push(<span key={`space-after-phrase-${i}`}> </span>)
+
           // Mark all these words as processed
           for (let j = i; j < i + len; j++) {
             processedIndices.add(j)
@@ -332,7 +335,7 @@ export default function EnochianTranslator() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
-                    className={`cursor-pointer rounded px-1 mx-0.5 border ${
+                    className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border ${
                       selectedWord === word ? 'ring-2 ring-primary' : ''
                     } ${details.method === 'missing' ? '' : methodClass}`}
                     onClick={() => handleWordClick(word)}
@@ -354,6 +357,9 @@ export default function EnochianTranslator() {
               </Tooltip>
             </TooltipProvider>,
           )
+
+          // Add a space after each word
+          result.push(<span key={`space-after-word-${i}`}> </span>)
         }
 
         processedIndices.add(i)
@@ -445,7 +451,7 @@ export default function EnochianTranslator() {
               <div>
                 <h3 className="text-sm font-medium mb-2">Words:</h3>
                 <div className="relative">
-                  <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
+                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
                     {renderAnnotatedTranslation()}
                   </div>
                   <Button
@@ -463,7 +469,7 @@ export default function EnochianTranslator() {
               <div>
                 <h3 className="text-sm font-medium mb-2">Phonetic:</h3>
                 <div className="relative">
-                  <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
+                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
                     <span>{phoneticResult}</span>
                   </div>
                   <Button
@@ -481,7 +487,7 @@ export default function EnochianTranslator() {
               <div>
                 <h3 className="text-sm font-medium mb-2">Symbols:</h3>
                 <div className="relative">
-                  <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
+                  <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
                     <span className="text-xl tracking-wide">
                       {symbolResult}
                     </span>
@@ -589,7 +595,7 @@ export default function EnochianTranslator() {
                 <h4 className="text-sm font-medium mb-2">
                   Enochian Root Analysis:
                 </h4>
-                <div className="bg-accent/30 rounded-md p-4 border">
+                <div className="bg-accent/30 rounded-md p-4 border break-words overflow-auto">
                   {renderRootAnalysis()}
                 </div>
               </div>

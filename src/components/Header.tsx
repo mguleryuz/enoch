@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { ThemeSelector } from './ui/theme-selector'
 
 export default function Header() {
   return (
@@ -13,6 +14,9 @@ export default function Header() {
           </Link>
         </div>
       </nav>
+      <div className="flex items-center gap-2">
+        <ThemeSelector />
+      </div>
     </header>
   )
 }

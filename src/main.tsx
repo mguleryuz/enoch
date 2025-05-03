@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 
 import * as TanstackQuery from './integrations/tanstack-query/root-provider'
+import { ThemeProvider } from './lib/theme-provider'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'
@@ -37,8 +38,10 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <TanstackQuery.Provider>
-        <RouterProvider router={router} />
-        <Toaster />
+        <ThemeProvider>
+          <RouterProvider router={router} />
+          <Toaster />
+        </ThemeProvider>
       </TanstackQuery.Provider>
     </StrictMode>,
   )

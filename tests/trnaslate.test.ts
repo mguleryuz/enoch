@@ -62,6 +62,8 @@ describe('EnochianTranslator', () => {
 
   // Set up translator instance before tests
   beforeAll(() => {
+    // Add "I" to the mock lexicon
+    mockLexiconData.push({ word: 'Gon', meaning: 'I' })
     translator = new EnochianTranslator(mockLexiconData, mockRootData)
   })
 
@@ -70,6 +72,20 @@ describe('EnochianTranslator', () => {
       const result = translator.translate('with')
       expect(result.translationText).toBe('in')
       expect(result.stats.direct).toBe(1)
+    })
+
+    it('should handle the personal pronoun "I" correctly', () => {
+      const result = translator.translate('I')
+      expect(result.translationText).toBe('Gon')
+      expect(result.stats.direct).toBe(1)
+      expect(result.stats.missing).toBe(0)
+    })
+
+    it('should handle single-letter words like "I" correctly', () => {
+      const result = translator.translate('I am')
+      expect(result.translationText).toBe('Gon [am]')
+      expect(result.stats.direct).toBe(1)
+      expect(result.stats.missing).toBe(1)
     })
 
     it('should mark untranslatable words with brackets', () => {

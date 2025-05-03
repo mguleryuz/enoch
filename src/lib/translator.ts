@@ -213,6 +213,41 @@ export class EnochianTranslator {
       }))
   }
 
+  // Function to translate and return complete result with all alternative displays
+  public translateComplete(
+    text: string,
+    options: TranslationOptions = {},
+  ): TranslationResult {
+    return this.translate(text, options)
+  }
+
+  // Private utility function to properly handle single-letter words
+  private handleSingleLetterWords(word: string): string | null {
+    // Special case for single-letter words
+    if (word.length === 1 && /[a-z]/i.test(word)) {
+      console.log(`Handling single letter word: "${word}"`)
+
+      // Special case for "I" (personal pronoun)
+      if (word.toLowerCase() === 'i') {
+        console.log(`Special case: Using "Gon" for the personal pronoun "I"`)
+        return 'Gon'
+      }
+
+      // Check for direct match of single letters in the dictionary
+      for (const [meaning, enochianWord] of this.meaningToWordMap.entries()) {
+        console.log(`Checking meaning: "${meaning}" -> "${enochianWord}"`)
+        if (meaning.toLowerCase() === word.toLowerCase()) {
+          console.log(`Found match: "${word}" -> "${enochianWord}"`)
+          return enochianWord
+        }
+      }
+
+      // If we got here, no match was found
+      console.log(`No match found for "${word}"`)
+    }
+    return null
+  }
+
   // This function takes English text and attempts to translate to Enochian
   public translate(
     text: string,
@@ -263,6 +298,17 @@ export class EnochianTranslator {
       const word = originalWord
         .slice(leadingPunct.length, originalWord.length - trailingPunct.length)
         .toLowerCase()
+
+      // Handle single-letter words specially (like "I", "a")
+      const singleLetterMatch = this.handleSingleLetterWords(word)
+      if (singleLetterMatch) {
+        result.push(leadingPunct + singleLetterMatch + trailingPunct)
+        directMatches++
+
+        // Add to word analysis
+        wordAnalysis[singleLetterMatch] = this.analyzeRoots(singleLetterMatch)
+        return
+      }
 
       // Normal word processing
       let match = this.meaningToWordMap.get(word)
@@ -390,13 +436,5 @@ export class EnochianTranslator {
       },
       wordAnalysis,
     }
-  }
-
-  // Function to translate and return complete result with all alternative displays
-  public translateComplete(
-    text: string,
-    options: TranslationOptions = {},
-  ): TranslationResult {
-    return this.translate(text, options)
   }
 }

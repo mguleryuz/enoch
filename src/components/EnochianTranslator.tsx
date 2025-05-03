@@ -1,33 +1,46 @@
-import { useEffect, useState } from 'react'
-import { AlertCircle, BookOpen, Check, Copy, Info } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { AlertCircle, Check, Copy } from 'lucide-react'
 import { toast } from 'sonner'
-import { useQuery } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Translator, fetchLexiconData, fetchRootData } from '@/lib/translator'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useEnochianDictionary } from '@/hooks/useEnochianDictionary'
+
+// Debounce utility function
+const useDebounce = <T,>(value: T, delay: number): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
 
 export default function EnochianTranslator() {
   const [input, setInput] = useState('')
   const [translationResult, setTranslationResult] = useState<string>('')
   const [phoneticResult, setPhoneticResult] = useState<string>('')
   const [symbolResult, setSymbolResult] = useState<string>('')
-  const [showDetails, setShowDetails] = useState(true)
-  const [rootDetailsView, setRootDetailsView] = useState(true)
   const [matchCounts, setMatchCounts] = useState<{
     direct: number
     partial: number
@@ -56,38 +69,11 @@ export default function EnochianTranslator() {
   const [selectedWord, setSelectedWord] = useState<string | null>(null)
   const [phraseMatches, setPhraseMatches] = useState<Record<string, string>>({})
 
-  // Using React Query to fetch lexicon data
-  const {
-    data: lexiconData = [],
-    isLoading: lexiconLoading,
-    error: lexiconError,
-  } = useQuery({
-    queryKey: ['enochianLexicon'],
-    queryFn: fetchLexiconData,
-  })
+  // Use the custom dictionary hook
+  const { translator, loading, error: errorMessage } = useEnochianDictionary()
 
-  // Using React Query to fetch root table data
-  const {
-    data: rootData = [],
-    isLoading: rootLoading,
-    error: rootError,
-  } = useQuery({
-    queryKey: ['enochianRoots'],
-    queryFn: fetchRootData,
-  })
-
-  // Using React Query to load the translator service
-  const {
-    data: translator,
-    isLoading: translatorLoading,
-    error: translatorError,
-  } = useQuery({
-    queryKey: ['enochianTranslator'],
-    queryFn: async () => {
-      return new Translator(lexiconData, rootData)
-    },
-    enabled: !!lexiconData.length && !!rootData.length,
-  })
+  // Debounce the input value to avoid excessive translations
+  const debouncedInput = useDebounce(input, 500)
 
   // Update current analysis whenever wordToAnalyze or wordAnalysis changes
   useEffect(() => {
@@ -97,18 +83,53 @@ export default function EnochianTranslator() {
     setCurrentAnalysis(analysis)
   }, [wordToAnalyze, wordAnalysis])
 
-  // Error message handling
-  const errorMessage = translatorError
-    ? `Error loading Enochian data: ${translatorError.toString()}`
-    : undefined
+  // Auto-translate effect using debounced input
+  useEffect(() => {
+    if (!translator) return
 
-  const loading = translatorLoading || lexiconLoading || rootLoading
+    if (!debouncedInput.trim()) {
+      // Reset results if input is empty
+      setTranslationResult('')
+      setPhoneticResult('')
+      setSymbolResult('')
+      setMatchCounts({
+        direct: 0,
+        partial: 0,
+        missing: 0,
+        constructed: 0,
+        total: 0,
+      })
+      setWordAnalysis({})
+      setConstructionDetails({})
+      setPhraseMatches({})
+      setWordToAnalyze('')
+      setSelectedWord(null)
+      return
+    }
+
+    // Translate the input
+    const result = translator.translate(debouncedInput)
+
+    setTranslationResult(result.translationText)
+    setPhoneticResult(result.phoneticText)
+    setSymbolResult(result.symbolText)
+    setMatchCounts(result.stats)
+    setWordAnalysis(result.wordAnalysis)
+    setConstructionDetails(result.constructionDetails)
+    setPhraseMatches(result.phraseMatches)
+
+    // Get first word for analysis if available
+    const firstEnochianWord = getFirstWordForAnalysis(result.translationText)
+    setWordToAnalyze(firstEnochianWord)
+    setSelectedWord(null)
+  }, [debouncedInput, translator])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
   }
 
-  const handleTranslate = () => {
+  // Manual translation function (kept for backward compatibility)
+  const handleTranslate = useCallback(() => {
     if (!translator || !input.trim()) return
 
     // Use the base translator
@@ -126,7 +147,7 @@ export default function EnochianTranslator() {
     const firstEnochianWord = getFirstWordForAnalysis(result.translationText)
     setWordToAnalyze(firstEnochianWord)
     setSelectedWord(null)
-  }
+  }, [input, translator])
 
   const handleCopy = (text: string) => {
     if (text) {
@@ -366,8 +387,7 @@ export default function EnochianTranslator() {
             <span>Enter Text to Translate</span>
           </CardTitle>
           <CardDescription>
-            Type English words or phrases below and click "Translate" to convert
-            to Enochian
+            Type English words or phrases below to auto-translate to Enochian
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -402,7 +422,8 @@ export default function EnochianTranslator() {
               </div>
             </div>
             <p className="text-xs text-muted italic">
-              Pro tip: Press Ctrl+Enter to translate quickly
+              Results are automatically updated as you type. Press Ctrl+Enter to
+              translate manually.
             </p>
           </div>
         </CardContent>

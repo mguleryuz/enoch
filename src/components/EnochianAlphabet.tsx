@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -8,40 +7,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-
-interface EnochianRoot {
-  english_letter: string
-  enochian_name: string
-  numeric_value: number
-  meaning: string
-  symbol: string
-}
-
-// Function to fetch Enochian root table data
-const fetchRootData = async (): Promise<Array<EnochianRoot>> => {
-  const response = await fetch('/enochian_root_table.json')
-  if (!response.ok) {
-    throw new Error('Failed to fetch root table data')
-  }
-  return response.json()
-}
+import { useEnochianDictionary } from '@/hooks/useEnochianDictionary'
 
 export default function EnochianAlphabet() {
   const [activeLetterIndex, setActiveLetterIndex] = useState<number | null>(
     null,
   )
 
-  // Using React Query to fetch root table data
-  const {
-    data: enochianLetters = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['enochianRoots'],
-    queryFn: fetchRootData,
-    select: (data) =>
-      data.filter((letter) => letter.english_letter.match(/^[A-Z]$/)),
-  })
+  const { rootData, loading: isLoading, error } = useEnochianDictionary()
+
+  const enochianLetters = rootData.filter((letter) =>
+    letter.english_letter.match(/^[A-Z]$/),
+  )
 
   if (isLoading) {
     return (

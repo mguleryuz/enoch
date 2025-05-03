@@ -384,7 +384,7 @@ export class Translator {
 
     // Now process individual words
     const result = processedWords
-      .map((word, index) => {
+      .map((word) => {
         // Skip phrase markers that were replaced during phrase matching
         if (word.startsWith('__PHRASE_MATCH_')) {
           // Check if this marker has already been processed
@@ -400,7 +400,7 @@ export class Translator {
           }
 
           // Fallback - use the associated phrase
-          for (const [phrase, enochianWord] of Object.entries(phraseMatches)) {
+          for (const [_, enochianWord] of Object.entries(phraseMatches)) {
             // Find the phrase that corresponds to this marker by checking
             // if all words in the range are the same marker
             const startIdx = processedWords.indexOf(word)
@@ -865,7 +865,7 @@ export class Translator {
     const enochianToOriginal = new Map<string, string>()
 
     // Add words from construction details
-    Object.entries(constructionDetails).forEach(([originalWord, details]) => {
+    Object.entries(constructionDetails).forEach(([_, details]) => {
       if (!details.result.startsWith('[')) {
         // Skip untranslated words
         enochianToOriginal.set(details.result, details.original)

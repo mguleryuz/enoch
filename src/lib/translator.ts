@@ -633,12 +633,22 @@ export class Translator {
         // Add to word analysis
         wordAnalysis[constructed.word] = this.analyzeRoots(constructed.word)
 
-        // Add construction details
-        constructionDetails[originalWord] = {
-          original: word,
-          result: constructed.word,
-          method: 'constructed',
-          explanation: constructed.explanation,
+        // Store original roots if available
+        if (constructed.originalRoots) {
+          constructionDetails[originalWord] = {
+            original: word,
+            result: constructed.word,
+            method: 'constructed',
+            explanation: constructed.explanation,
+            originalRoots: constructed.originalRoots,
+          }
+        } else {
+          constructionDetails[originalWord] = {
+            original: word,
+            result: constructed.word,
+            method: 'constructed',
+            explanation: constructed.explanation,
+          }
         }
 
         stats.constructed++
@@ -774,6 +784,7 @@ export class Translator {
   private constructWordFromRoots(word: string): {
     word: string
     explanation: string
+    originalRoots?: Array<EnochianRoot>
   } | null {
     // First check for direct meaning matches
     const singleWordMatches = Array.from(this.meaningToWordMap.entries())
@@ -799,56 +810,45 @@ export class Translator {
       }
     }
 
-    // For short words (3 letters or less), map directly using all letters
+    // For short words (3 letters or less), preserve the word directly
     if (word.length <= 3) {
-      const letters = Array.from(word.toLowerCase())
-      const constructedWord = letters
-        .map((l) => {
-          const root = this.findRootForLetter(l)
-          return root ? root.enochian_name.charAt(0).toLowerCase() : l
-        })
-        .join('')
-
-      // Capitalize constructed word
+      // Capitalize the word
       const finalWord =
-        constructedWord.charAt(0).toUpperCase() + constructedWord.slice(1)
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+
+      // Find roots for each letter
+      const letters = Array.from(word.toLowerCase())
+      const usedRoots = letters
+        .map((l) => this.findRootForLetter(l))
+        .filter(Boolean) as Array<EnochianRoot>
 
       return {
         word: finalWord,
-        explanation: `Constructed using the first letter of each root name (${letters
-          .map((l) => {
-            const root = this.findRootForLetter(l)
-            return root ? `${l}→${root.enochian_name}` : l
-          })
-          .join(', ')})`,
+        explanation: `Preserved word directly: "${word}" → "${finalWord}"`,
+        originalRoots: usedRoots,
       }
     }
 
-    // For longer words, use all significant roots
+    // For longer words, preserve the word directly
     const significantRoots = Array.from(word.toLowerCase())
       .filter((char) => /[a-z]/i.test(char))
       .map((letter) => this.findRootForLetter(letter))
-      .filter(Boolean)
+      .filter(Boolean) as Array<EnochianRoot>
 
     if (significantRoots.length > 0) {
-      // Use all significant roots instead of limiting to the first 3
-      const usedRoots = significantRoots
-      const constructedWord = usedRoots
-        .map((root) => root?.enochian_name.charAt(0).toLowerCase())
-        .join('')
-
-      // Capitalize the constructed word
+      // Capitalize the word
       const finalWord =
-        constructedWord.charAt(0).toUpperCase() + constructedWord.slice(1)
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
 
       return {
         word: finalWord,
-        explanation: `Constructed from all letter roots: ${usedRoots
+        explanation: `Preserved word with roots: ${significantRoots
           .map(
             (root) =>
-              `${root?.english_letter} (${root?.meaning.split(':')[0].trim()})`,
+              `${root.english_letter} (${root.meaning.split(':')[0].trim()})`,
           )
           .join(', ')}`,
+        originalRoots: significantRoots,
       }
     }
 
@@ -863,12 +863,18 @@ export class Translator {
   ): { phoneticText: string; symbolText: string } {
     // Create a map of Enochian words to their original English words
     const enochianToOriginal = new Map<string, string>()
+    const enochianToRoots = new Map<string, Array<EnochianRoot>>()
 
     // Add words from construction details
     Object.entries(constructionDetails).forEach(([_, details]) => {
       if (!details.result.startsWith('[')) {
         // Skip untranslated words
         enochianToOriginal.set(details.result, details.original)
+
+        // If we have original roots, store them
+        if (details.originalRoots) {
+          enochianToRoots.set(details.result, details.originalRoots)
+        }
       }
     })
 
@@ -893,6 +899,7 @@ export class Translator {
       // Check if this is a special case like "I" → "Gon"
       const originalWord = enochianToOriginal.get(enochianWord)
       const isSpecialCase = originalWord?.toLowerCase() === 'i'
+      const originalRoots = enochianToRoots.get(enochianWord)
 
       // Create regex to match the word with word boundaries
       const regex = new RegExp(`\\b${enochianWord}\\b`, 'g')
@@ -901,8 +908,14 @@ export class Translator {
       if (isSpecialCase) {
         // For special cases like "I" → "Gon", keep the Enochian word directly
         // (already correct in phoneticText)
+      } else if (originalRoots && originalRoots.length > 0) {
+        // If we have original roots, use those for phonetic representation
+        const phoneticVersion = originalRoots
+          .map((root) => root.enochian_name)
+          .join('-')
+        phoneticText = phoneticText.replace(regex, phoneticVersion)
       } else {
-        // For all other words, including phrase matches, convert to phonetic
+        // For words without stored roots, fall back to default conversion
         const phoneticVersion = this.convertToPhonetic(enochianWord)
         phoneticText = phoneticText.replace(regex, phoneticVersion)
       }
@@ -911,8 +924,12 @@ export class Translator {
       if (isSpecialCase) {
         // For special cases like "I" → "Gon", keep the Enochian word directly
         // (already correct in symbolText)
+      } else if (originalRoots && originalRoots.length > 0) {
+        // If we have original roots, use those for symbol representation
+        const symbolVersion = originalRoots.map((root) => root.symbol).join('')
+        symbolText = symbolText.replace(regex, symbolVersion)
       } else {
-        // For all other words, including phrase matches, convert to symbols
+        // For words without stored roots, fall back to default conversion
         const symbolVersion = this.convertToSymbols(enochianWord)
         symbolText = symbolText.replace(regex, symbolVersion)
       }

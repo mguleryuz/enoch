@@ -58,6 +58,7 @@ export default function EnochianTranslator() {
     >
   >({})
   const [selectedWord, setSelectedWord] = useState<string | null>(null)
+  const [phraseMatches, setPhraseMatches] = useState<Record<string, string>>({})
 
   // Using React Query to fetch lexicon data
   const {
@@ -115,7 +116,7 @@ export default function EnochianTranslator() {
     if (!translator || !input.trim()) return
 
     // Use the base translator
-    const result = translator.translateComplete(input)
+    const result = translator.translate(input)
 
     setTranslationResult(result.translationText)
     setPhoneticResult(result.phoneticText)
@@ -123,6 +124,7 @@ export default function EnochianTranslator() {
     setMatchCounts(result.stats)
     setWordAnalysis(result.wordAnalysis)
     setConstructionDetails(result.constructionDetails)
+    setPhraseMatches(result.phraseMatches)
 
     // Get first word for analysis if available
     const firstEnochianWord = getFirstWordForAnalysis(result.translationText)
@@ -169,9 +171,9 @@ export default function EnochianTranslator() {
 
   const handleWordClick = (word: string) => {
     setSelectedWord(word)
-    // Find the translated result for this word
-    const details = constructionDetails[word]
-    if (details && !details.result.startsWith('[')) {
+    // No unnecessary conditional needed, just proceed with using the word
+    if (Object.prototype.hasOwnProperty.call(constructionDetails, word)) {
+      const details = constructionDetails[word]
       // Strip any punctuation from the result
       const cleanResult = details.result.replace(/[.,;:!?'"()-]/g, '')
       setWordToAnalyze(cleanResult)
@@ -235,48 +237,126 @@ export default function EnochianTranslator() {
     )
   }
 
-  // Render the annotated translation output
+  // Modify renderAnnotatedTranslation to handle phrase matches
   const renderAnnotatedTranslation = () => {
     const words = input.split(/\s+/)
+    const result: Array<React.ReactElement> = []
 
-    return words.map((word, index) => {
-      const details = constructionDetails[word]
-      // Use an empty string with a space as the default for words without details
-      if (typeof details === 'undefined') {
-        return <span key={index}>{word} </span>
+    // Track which words have been processed (for phrase matches)
+    const processedIndices = new Set<number>()
+
+    // First, try to identify all phrase matches
+    for (let i = 0; i < words.length; i++) {
+      // Skip already processed words
+      if (processedIndices.has(i)) continue
+
+      // Try multi-word phrases of decreasing length
+      for (let len = Math.min(5, words.length - i); len > 1; len--) {
+        const phraseWords = words.slice(i, i + len)
+        const phrase = phraseWords.join(' ')
+
+        // Check if this is a matching phrase
+        if (Object.prototype.hasOwnProperty.call(phraseMatches, phrase)) {
+          // This is a phrase match!
+          const enochianWord = phraseMatches[phrase]
+
+          result.push(
+            <TooltipProvider key={`phrase-${i}`}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={`cursor-pointer rounded px-2 py-1 mx-0.5 border bg-purple-100 text-purple-800 border-purple-300 font-medium ${
+                      selectedWord === phrase ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedWord(phrase)
+                      setWordToAnalyze(enochianWord)
+                    }}
+                  >
+                    {enochianWord}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-sm">
+                  <div className="space-y-1 p-1">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">{phrase}</span>
+                      <Badge
+                        variant="outline"
+                        className="bg-purple-100 text-purple-800 border-purple-300"
+                      >
+                        phrase match
+                      </Badge>
+                    </div>
+                    <p className="text-xs">
+                      {Object.prototype.hasOwnProperty.call(
+                        constructionDetails,
+                        phrase,
+                      )
+                        ? constructionDetails[phrase].explanation
+                        : `Phrase match: "${phrase}" → "${enochianWord}"`}
+                    </p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>,
+          )
+
+          // Mark all these words as processed
+          for (let j = i; j < i + len; j++) {
+            processedIndices.add(j)
+          }
+
+          // Skip ahead
+          i += len - 1
+          break
+        }
       }
 
-      // Create a class based on the translation method
-      const methodClass = getMethodBadgeColor(details.method)
+      // If no phrase match was found, process as a single word
+      if (!processedIndices.has(i)) {
+        const word = words[i]
 
-      return (
-        <TooltipProvider key={index}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className={`cursor-pointer rounded px-1 mx-0.5 border ${
-                  selectedWord === word ? 'ring-2 ring-primary' : ''
-                } ${details.method === 'missing' ? '' : methodClass}`}
-                onClick={() => handleWordClick(word)}
-              >
-                {details.result}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-sm">
-              <div className="space-y-1 p-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">{word}</span>
-                  <Badge variant="outline" className={methodClass}>
-                    {details.method}
-                  </Badge>
-                </div>
-                <p className="text-xs">{details.explanation}</p>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )
-    })
+        // Check if we have construction details for this word
+        if (!Object.prototype.hasOwnProperty.call(constructionDetails, word)) {
+          result.push(<span key={`word-${i}`}>{word} </span>)
+        } else {
+          const details = constructionDetails[word]
+          const methodClass = getMethodBadgeColor(details.method)
+
+          result.push(
+            <TooltipProvider key={`word-${i}`}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={`cursor-pointer rounded px-1 mx-0.5 border ${
+                      selectedWord === word ? 'ring-2 ring-primary' : ''
+                    } ${details.method === 'missing' ? '' : methodClass}`}
+                    onClick={() => handleWordClick(word)}
+                  >
+                    {details.result}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-sm">
+                  <div className="space-y-1 p-1">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">{word}</span>
+                      <Badge variant="outline" className={methodClass}>
+                        {details.method}
+                      </Badge>
+                    </div>
+                    <p className="text-xs">{details.explanation}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>,
+          )
+        }
+
+        processedIndices.add(i)
+      }
+    }
+
+    return result
   }
 
   return loading ? (
@@ -394,10 +474,54 @@ export default function EnochianTranslator() {
                 </div>
               ) : (
                 <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
-                  {displayMode === 'phonetic' && phoneticResult}
+                  {displayMode === 'phonetic' && (
+                    <div>
+                      {/* Check if the entire input is a phrase match */}
+                      {Object.keys(phraseMatches).some(
+                        (phrase) =>
+                          phrase.toLowerCase() === input.trim().toLowerCase(),
+                      ) ? (
+                        // Display the matched phrase as-is for phonetic mode
+                        <span className="font-medium">
+                          {
+                            phraseMatches[
+                              Object.keys(phraseMatches).find(
+                                (phrase) =>
+                                  phrase.toLowerCase() ===
+                                  input.trim().toLowerCase(),
+                              ) || ''
+                            ]
+                          }
+                        </span>
+                      ) : (
+                        // Normal phonetic display
+                        <span>{phoneticResult}</span>
+                      )}
+                    </div>
+                  )}
                   {displayMode === 'symbol' && (
                     <span className="text-xl tracking-wide">
-                      {symbolResult}
+                      {/* Check if the entire input is a phrase match */}
+                      {Object.keys(phraseMatches).some(
+                        (phrase) =>
+                          phrase.toLowerCase() === input.trim().toLowerCase(),
+                      ) ? (
+                        // Display the matched phrase as-is for symbol mode
+                        <span className="font-medium">
+                          {
+                            phraseMatches[
+                              Object.keys(phraseMatches).find(
+                                (phrase) =>
+                                  phrase.toLowerCase() ===
+                                  input.trim().toLowerCase(),
+                              ) || ''
+                            ]
+                          }
+                        </span>
+                      ) : (
+                        // Normal symbol display
+                        <span>{symbolResult}</span>
+                      )}
                     </span>
                   )}
                 </div>
@@ -468,6 +592,20 @@ export default function EnochianTranslator() {
                       {matchCounts.total === 1 ? 'word' : 'words'}
                     </span>
                   </Badge>
+                  {Object.keys(phraseMatches).length > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="flex items-center gap-1 py-1 px-2 bg-purple-100 text-purple-800 border-purple-300"
+                    >
+                      <Check className="h-3.5 w-3.5 text-purple-500" />
+                      <span>
+                        {Object.keys(phraseMatches).length} phrase{' '}
+                        {Object.keys(phraseMatches).length === 1
+                          ? 'match'
+                          : 'matches'}
+                      </span>
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-3 text-xs text-muted space-y-1">
                   <p>Words in [brackets] have no direct Enochian equivalent.</p>
@@ -479,8 +617,9 @@ export default function EnochianTranslator() {
                     Color indicates translation method:{' '}
                     <span className="text-green-700">direct</span>,{' '}
                     <span className="text-yellow-700">partial</span>,{' '}
-                    <span className="text-blue-700">constructed</span>, or{' '}
-                    <span className="text-red-700">missing</span>.
+                    <span className="text-blue-700">constructed</span>,{' '}
+                    <span className="text-red-700">missing</span>, or{' '}
+                    <span className="text-purple-700">phrase match</span>.
                   </p>
                 </div>
               </div>

@@ -729,6 +729,12 @@ export class Translator {
     word: string
     explanation: string
   } | null {
+    // Handle negation prefixes first (im-, un-, non-, etc.)
+    const negationMatch = this.handleNegationPrefixes(word)
+    if (negationMatch) {
+      return negationMatch
+    }
+
     // Try stemming first
     const stemmed = this.stemWord(word)
     const stemMatches = this.stemMap.get(stemmed)
@@ -748,6 +754,12 @@ export class Translator {
     for (const [meaning, enochianWord] of this.meaningToWordMap.entries()) {
       // Check if meaning contains word or word contains meaning
       if (meaning.includes(word) || word.includes(meaning)) {
+        // Skip if the word contains the meaning but also has a common negation prefix
+        // This prevents "immortal" from matching with "mortal"
+        if (word.includes(meaning) && this.hasNegationPrefix(word, meaning)) {
+          continue
+        }
+
         const score = meaning.includes(word)
           ? word.length / meaning.length
           : meaning.length / word.length
@@ -771,6 +783,85 @@ export class Translator {
     }
 
     return null
+  }
+
+  // Handle words with common negation prefixes (im-, un-, non-, etc.)
+  private handleNegationPrefixes(word: string): {
+    word: string
+    explanation: string
+  } | null {
+    // Define common English negation prefixes
+    const negationPrefixes = [
+      { prefix: 'im', fullPrefix: 'im' },
+      { prefix: 'in', fullPrefix: 'in' },
+      { prefix: 'ir', fullPrefix: 'ir' },
+      { prefix: 'il', fullPrefix: 'il' },
+      { prefix: 'un', fullPrefix: 'un' },
+      { prefix: 'non', fullPrefix: 'non' },
+      { prefix: 'dis', fullPrefix: 'dis' },
+      { prefix: 'a', fullPrefix: 'a' }, // As in "amoral"
+      { prefix: 'anti', fullPrefix: 'anti' },
+    ]
+
+    // Use OL- as the Enochian negation prefix (common in Enochian texts)
+    const enochianNegationPrefix = 'OL'
+
+    // Check if word starts with any negation prefix
+    for (const { prefix, fullPrefix } of negationPrefixes) {
+      if (word.startsWith(prefix)) {
+        // Get the root word (without the negation prefix)
+        const rootWord = word.substring(prefix.length)
+
+        // Check if the root word exists in our dictionary
+        const rootWordMatch = this.meaningToWordMap.get(rootWord)
+
+        if (rootWordMatch) {
+          // Create an Enochian negated version using the OL- prefix
+          const negatedWord = `${enochianNegationPrefix}${rootWordMatch}`
+
+          return {
+            word: negatedWord,
+            explanation: `Negation handling: "${word}" → "${fullPrefix}-" + "${rootWord}" → "${enochianNegationPrefix}-${rootWordMatch}"`,
+          }
+        }
+
+        // Try stemming the root word
+        const stemmedRoot = this.stemWord(rootWord)
+        const stemMatches = this.stemMap.get(stemmedRoot)
+
+        if (stemMatches && stemMatches.length > 0) {
+          // Create an Enochian negated version using the OL- prefix
+          const negatedWord = `${enochianNegationPrefix}${stemMatches[0]}`
+
+          return {
+            word: negatedWord,
+            explanation: `Negation handling with stemming: "${word}" → "${fullPrefix}-" + "${rootWord}" → "${stemmedRoot}" → "${enochianNegationPrefix}-${stemMatches[0]}"`,
+          }
+        }
+      }
+    }
+
+    return null
+  }
+
+  // Helper to check if a word contains a root but with a negation prefix
+  private hasNegationPrefix(word: string, possibleRoot: string): boolean {
+    // Check if the word contains the root but isn't the root itself
+    if (word === possibleRoot) return false
+
+    const prefixes = ['im', 'in', 'ir', 'il', 'un', 'non', 'dis', 'a', 'anti']
+
+    for (const prefix of prefixes) {
+      // Check if word starts with prefix and then contains the root
+      if (
+        word.startsWith(prefix) &&
+        word.substring(prefix.length) === possibleRoot
+      ) {
+        return true
+      }
+    }
+
+    return false
   }
 
   // Find the root information for a letter

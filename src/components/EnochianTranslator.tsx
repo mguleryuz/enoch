@@ -443,27 +443,7 @@ export default function EnochianTranslator() {
                 <h3 className="text-sm font-medium mb-2">Phonetic:</h3>
                 <div className="relative">
                   <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
-                    {/* Check if the entire input is a phrase match */}
-                    {Object.keys(phraseMatches).some(
-                      (phrase) =>
-                        phrase.toLowerCase() === input.trim().toLowerCase(),
-                    ) ? (
-                      // Display the matched phrase as-is for phonetic mode
-                      <span className="font-medium">
-                        {
-                          phraseMatches[
-                            Object.keys(phraseMatches).find(
-                              (phrase) =>
-                                phrase.toLowerCase() ===
-                                input.trim().toLowerCase(),
-                            ) || ''
-                          ]
-                        }
-                      </span>
-                    ) : (
-                      // Normal phonetic display
-                      <span>{phoneticResult}</span>
-                    )}
+                    <span>{phoneticResult}</span>
                   </div>
                   <Button
                     size="icon"
@@ -482,27 +462,7 @@ export default function EnochianTranslator() {
                 <div className="relative">
                   <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
                     <span className="text-xl tracking-wide">
-                      {/* Check if the entire input is a phrase match */}
-                      {Object.keys(phraseMatches).some(
-                        (phrase) =>
-                          phrase.toLowerCase() === input.trim().toLowerCase(),
-                      ) ? (
-                        // Display the matched phrase as-is for symbol mode
-                        <span className="font-medium">
-                          {
-                            phraseMatches[
-                              Object.keys(phraseMatches).find(
-                                (phrase) =>
-                                  phrase.toLowerCase() ===
-                                  input.trim().toLowerCase(),
-                              ) || ''
-                            ]
-                          }
-                        </span>
-                      ) : (
-                        // Normal symbol display
-                        <span>{symbolResult}</span>
-                      )}
+                      {symbolResult}
                     </span>
                   </div>
                   <Button

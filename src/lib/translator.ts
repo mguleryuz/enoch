@@ -872,9 +872,13 @@ export class Translator {
       }
     })
 
-    // Generate phonetic text
+    // Add phrase matches to the enochianToOriginal map
+    Object.entries(phraseMatches).forEach(([originalPhrase, enochianWord]) => {
+      enochianToOriginal.set(enochianWord, originalPhrase)
+    })
+
+    // Start with the original translation text
     let phoneticText = translationText
-    // Generate symbol text
     let symbolText = translationText
 
     // Replace Enochian words with their phonetic/symbol versions

@@ -17,6 +17,7 @@ const mockLexiconData = [
   { word: 'ziem', meaning: 'hand, hands' },
   { word: 'ollog', meaning: 'man, humanity' },
   { word: 'cormp', meaning: 'number, numbered' },
+  { word: 'Zirdo', meaning: 'I am' },
 ]
 
 const mockRootData = [
@@ -55,6 +56,34 @@ const mockRootData = [
     meaning: 'Root of Desire',
     symbol: '⟨И⟩',
   },
+  {
+    english_letter: 'Z',
+    enochian_name: 'Ceph',
+    numeric_value: 26,
+    meaning: 'Root of Motion',
+    symbol: '⟨Z⟩',
+  },
+  {
+    english_letter: 'R',
+    enochian_name: 'Don',
+    numeric_value: 20,
+    meaning: 'Root of Presence',
+    symbol: '⟨R⟩',
+  },
+  {
+    english_letter: 'D',
+    enochian_name: 'Med',
+    numeric_value: 4,
+    meaning: 'Root of Presence',
+    symbol: '⟨D⟩',
+  },
+  {
+    english_letter: 'O',
+    enochian_name: 'Graph',
+    numeric_value: 15,
+    meaning: 'Root of Substance',
+    symbol: '⟨O⟩',
+  },
 ]
 
 describe('EnochianTranslator', () => {
@@ -86,6 +115,26 @@ describe('EnochianTranslator', () => {
       expect(result.translationText).toBe('Gon [am]')
       expect(result.stats.direct).toBe(1)
       expect(result.stats.missing).toBe(1)
+    })
+
+    it('should handle phrase matches like "I am" correctly', () => {
+      const result = translator.translate('I am')
+
+      // The phrase should match to "Zirdo" in our mock data
+      expect(result.translationText).toBe('Zirdo')
+
+      // Check that phonetic transformation is applied correctly
+      expect(result.phoneticText).toBe('Ceph-Gon-Don-Med-Graph')
+
+      // Check that symbol transformation is applied correctly
+      expect(result.symbolText).toBe('⟨Z⟩⟨I⟩⟨R⟩⟨D⟩⟨O⟩')
+
+      // Should be marked as a direct match
+      expect(result.stats.direct).toBe(1)
+
+      // Check that it's recorded in phraseMatches
+      expect(Object.keys(result.phraseMatches).length).toBe(1)
+      expect(result.phraseMatches['I am']).toBe('Zirdo')
     })
 
     it('should mark untranslatable words with brackets', () => {

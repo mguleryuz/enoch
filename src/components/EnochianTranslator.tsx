@@ -15,6 +15,12 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Translator, fetchLexiconData, fetchRootData } from '@/lib/translator'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export default function EnochianTranslator() {
   const [input, setInput] = useState('')
@@ -27,8 +33,9 @@ export default function EnochianTranslator() {
     direct: number
     partial: number
     missing: number
+    constructed: number
     total: number
-  }>({ direct: 0, partial: 0, missing: 0, total: 0 })
+  }>({ direct: 0, partial: 0, missing: 0, constructed: 0, total: 0 })
   const [displayMode, setDisplayMode] = useState<
     'original' | 'phonetic' | 'symbol'
   >('phonetic')
@@ -39,6 +46,18 @@ export default function EnochianTranslator() {
   const [currentAnalysis, setCurrentAnalysis] = useState<
     Array<{ letter: string; root?: any }>
   >([])
+  const [constructionDetails, setConstructionDetails] = useState<
+    Record<
+      string,
+      {
+        original: string
+        result: string
+        method: 'direct' | 'partial' | 'constructed' | 'missing'
+        explanation: string
+      }
+    >
+  >({})
+  const [selectedWord, setSelectedWord] = useState<string | null>(null)
 
   // Using React Query to fetch lexicon data
   const {
@@ -103,10 +122,12 @@ export default function EnochianTranslator() {
     setSymbolResult(result.symbolText)
     setMatchCounts(result.stats)
     setWordAnalysis(result.wordAnalysis)
+    setConstructionDetails(result.constructionDetails)
 
     // Get first word for analysis if available
     const firstEnochianWord = getFirstWordForAnalysis(result.translationText)
     setWordToAnalyze(firstEnochianWord)
+    setSelectedWord(null)
   }
 
   const handleCopy = (type: 'original' | 'phonetic' | 'symbol') => {
@@ -144,6 +165,33 @@ export default function EnochianTranslator() {
     // Only return the word if it's a valid Enochian word (not marked with brackets)
     const isValidWord = firstWord && !firstWord.match(/^\[.*\]$/)
     return isValidWord ? firstWord : ''
+  }
+
+  const handleWordClick = (word: string) => {
+    setSelectedWord(word)
+    // Find the translated result for this word
+    const details = constructionDetails[word]
+    if (details && !details.result.startsWith('[')) {
+      // Strip any punctuation from the result
+      const cleanResult = details.result.replace(/[.,;:!?'"()-]/g, '')
+      setWordToAnalyze(cleanResult)
+    }
+  }
+
+  // Get badge color based on translation method
+  const getMethodBadgeColor = (method: string) => {
+    switch (method) {
+      case 'direct':
+        return 'bg-green-100 text-green-800 border-green-300'
+      case 'partial':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+      case 'constructed':
+        return 'bg-blue-100 text-blue-800 border-blue-300'
+      case 'missing':
+        return 'bg-red-100 text-red-800 border-red-300'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-300'
+    }
   }
 
   // Replace the root analysis rendering section
@@ -185,6 +233,50 @@ export default function EnochianTranslator() {
         </div>
       </div>
     )
+  }
+
+  // Render the annotated translation output
+  const renderAnnotatedTranslation = () => {
+    const words = input.split(/\s+/)
+
+    return words.map((word, index) => {
+      const details = constructionDetails[word]
+      // Use an empty string with a space as the default for words without details
+      if (typeof details === 'undefined') {
+        return <span key={index}>{word} </span>
+      }
+
+      // Create a class based on the translation method
+      const methodClass = getMethodBadgeColor(details.method)
+
+      return (
+        <TooltipProvider key={index}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className={`cursor-pointer rounded px-1 mx-0.5 border ${
+                  selectedWord === word ? 'ring-2 ring-primary' : ''
+                } ${details.method === 'missing' ? '' : methodClass}`}
+                onClick={() => handleWordClick(word)}
+              >
+                {details.result}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-sm">
+              <div className="space-y-1 p-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold">{word}</span>
+                  <Badge variant="outline" className={methodClass}>
+                    {details.method}
+                  </Badge>
+                </div>
+                <p className="text-xs">{details.explanation}</p>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )
+    })
   }
 
   return loading ? (
@@ -296,13 +388,21 @@ export default function EnochianTranslator() {
 
           <CardContent>
             <div className="relative">
-              <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
-                {displayMode === 'original' && translationResult}
-                {displayMode === 'phonetic' && phoneticResult}
-                {displayMode === 'symbol' && (
-                  <span className="text-xl tracking-wide">{symbolResult}</span>
-                )}
-              </div>
+              {displayMode === 'original' ? (
+                <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
+                  {renderAnnotatedTranslation()}
+                </div>
+              ) : (
+                <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
+                  {displayMode === 'phonetic' && phoneticResult}
+                  {displayMode === 'symbol' && (
+                    <span className="text-xl tracking-wide">
+                      {symbolResult}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <Button
                 size="icon"
                 variant="outline"
@@ -341,6 +441,16 @@ export default function EnochianTranslator() {
                   </Badge>
                   <Badge
                     variant="outline"
+                    className="flex items-center gap-1 py-1 px-2 bg-blue-100 text-blue-800 border-blue-300"
+                  >
+                    <Check className="h-3.5 w-3.5 text-blue-500" />
+                    <span>
+                      {matchCounts.constructed} constructed{' '}
+                      {matchCounts.constructed === 1 ? 'word' : 'words'}
+                    </span>
+                  </Badge>
+                  <Badge
+                    variant="outline"
                     className="flex items-center gap-1 py-1 px-2"
                   >
                     <AlertCircle className="h-3.5 w-3.5 text-destructive" />
@@ -359,9 +469,20 @@ export default function EnochianTranslator() {
                     </span>
                   </Badge>
                 </div>
-                <p className="text-xs text-muted mt-3">
-                  Words in [brackets] have no direct Enochian equivalent.
-                </p>
+                <div className="mt-3 text-xs text-muted space-y-1">
+                  <p>Words in [brackets] have no direct Enochian equivalent.</p>
+                  <p>
+                    Click on any translated word to see details on how it was
+                    translated.
+                  </p>
+                  <p>
+                    Color indicates translation method:{' '}
+                    <span className="text-green-700">direct</span>,{' '}
+                    <span className="text-yellow-700">partial</span>,{' '}
+                    <span className="text-blue-700">constructed</span>, or{' '}
+                    <span className="text-red-700">missing</span>.
+                  </p>
+                </div>
               </div>
             )}
           </CardContent>

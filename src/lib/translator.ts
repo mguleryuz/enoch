@@ -19,15 +19,26 @@ interface TranslationResult {
     direct: number
     partial: number
     missing: number
+    constructed: number
     total: number
   }
   wordAnalysis: Record<string, Array<{ letter: string; root?: EnochianRoot }>>
+  constructionDetails: Record<
+    string,
+    {
+      original: string
+      result: string
+      method: 'direct' | 'partial' | 'constructed' | 'missing'
+      explanation: string
+    }
+  >
 }
 
 interface TranslationOptions {
   fuzzyMatching?: boolean
   pluralHandling?: boolean
   contextAware?: boolean
+  rootConstruction?: boolean
 }
 
 // Function to fetch Enochian lexicon data
@@ -213,6 +224,92 @@ export class Translator {
       }))
   }
 
+  // New method to construct an Enochian word from English using root meanings
+  private constructWordFromRoots(
+    word: string,
+  ): { word: string; explanation: string } | null {
+    // First, check if there's a direct meaning match for common words
+    // This is dynamic and uses the lexicon data
+    const singleWordMatches = Array.from(this.meaningToWordMap.entries())
+      .filter(([meaning, _]) => {
+        // Look for meanings that are exactly this word or contain this word
+        return (
+          meaning.toLowerCase() === word.toLowerCase() ||
+          meaning.toLowerCase().includes(` ${word.toLowerCase()} `) ||
+          meaning.toLowerCase().endsWith(` ${word.toLowerCase()}`)
+        )
+      })
+      .sort((a, b) => {
+        // Prioritize exact matches
+        if (a[0].toLowerCase() === word.toLowerCase()) return -1
+        if (b[0].toLowerCase() === word.toLowerCase()) return 1
+        return a[0].length - b[0].length // Shorter meanings are more precise
+      })
+
+    if (singleWordMatches.length > 0) {
+      const [meaning, enochianWord] = singleWordMatches[0]
+      return {
+        word: enochianWord,
+        explanation: `Found in lexicon: "${word}" appears in meaning "${meaning}" → "${enochianWord}"`,
+      }
+    }
+
+    // For short words, we can try to map them directly using the first letters
+    if (word.length <= 3) {
+      const letters = Array.from(word.toLowerCase())
+      const constructedWord = letters
+        .map((l) => {
+          const root = this.findRootMeaning(l)
+          return root ? root.enochian_name.charAt(0).toLowerCase() : l
+        })
+        .join('')
+
+      // Capitalize constructed word
+      const finalWord =
+        constructedWord.charAt(0).toUpperCase() + constructedWord.slice(1)
+
+      return {
+        word: finalWord,
+        explanation: `Constructed using the first letter of each root name (${letters
+          .map((l) => {
+            const root = this.findRootMeaning(l)
+            return root ? `${l}→${root.enochian_name}` : l
+          })
+          .join(', ')})`,
+      }
+    }
+
+    // For longer words, try to construct them from key roots
+    const significantRoots = Array.from(word.toLowerCase())
+      .filter((char) => /[a-z]/i.test(char))
+      .map((letter) => this.findRootMeaning(letter))
+      .filter(Boolean)
+
+    if (significantRoots.length > 0) {
+      // Take first 3 significant roots (or fewer if not available)
+      const usedRoots = significantRoots.slice(0, 3)
+      const constructedWord = usedRoots
+        .map((root) => root?.enochian_name.charAt(0).toLowerCase())
+        .join('')
+
+      // Capitalize the constructed word
+      const finalWord =
+        constructedWord.charAt(0).toUpperCase() + constructedWord.slice(1)
+
+      return {
+        word: finalWord,
+        explanation: `Constructed from key letter roots: ${usedRoots
+          .map(
+            (root) =>
+              `${root?.english_letter} (${root?.meaning.split(':')[0].trim()})`,
+          )
+          .join(', ')}`,
+      }
+    }
+
+    return null
+  }
+
   // Function to translate and return complete result with all alternative displays
   public translateComplete(
     text: string,
@@ -222,28 +319,49 @@ export class Translator {
   }
 
   // Private utility function to properly handle single-letter words
-  private handleSingleLetterWords(word: string): string | null {
+  private handleSingleLetterWords(word: string): {
+    result: string
+    method: 'direct' | 'partial' | 'constructed'
+    explanation: string
+  } | null {
     // Special case for single-letter words
     if (word.length === 1 && /[a-z]/i.test(word)) {
-      console.log(`Handling single letter word: "${word}"`)
+      // Find all lexicon entries that might match this single letter
+      const possibleMatches = Array.from(this.meaningToWordMap.entries())
+        .filter(([meaning, _]) => {
+          return (
+            // Exact match for the letter
+            meaning.toLowerCase() === word.toLowerCase() ||
+            // Or the meaning is just the letter (like "a", "i")
+            meaning === word
+          )
+        })
+        .sort((a, b) => {
+          // Prioritize exact matches
+          if (a[0].toLowerCase() === word.toLowerCase()) return -1
+          if (b[0].toLowerCase() === word.toLowerCase()) return 1
+          return 0
+        })
 
-      // Special case for "I" (personal pronoun)
-      if (word.toLowerCase() === 'i') {
-        console.log(`Special case: Using "Gon" for the personal pronoun "I"`)
-        return 'Gon'
-      }
-
-      // Check for direct match of single letters in the dictionary
-      for (const [meaning, enochianWord] of this.meaningToWordMap.entries()) {
-        console.log(`Checking meaning: "${meaning}" -> "${enochianWord}"`)
-        if (meaning.toLowerCase() === word.toLowerCase()) {
-          console.log(`Found match: "${word}" -> "${enochianWord}"`)
-          return enochianWord
+      // If we have matches, use the first one
+      if (possibleMatches.length > 0) {
+        const [meaning, enochianWord] = possibleMatches[0]
+        return {
+          result: enochianWord,
+          method: 'direct',
+          explanation: `Direct match found in lexicon: "${word}" → "${meaning}" → "${enochianWord}"`,
         }
       }
 
-      // If we got here, no match was found
-      console.log(`No match found for "${word}"`)
+      // Fall back to using the Enochian letter name from the root table
+      const root = this.findRootMeaning(word)
+      if (root) {
+        return {
+          result: root.enochian_name,
+          method: 'constructed',
+          explanation: `Using Enochian letter name: "${word}" → "${root.enochian_name}" (${root.meaning.split(':')[0].trim()})`,
+        }
+      }
     }
     return null
   }
@@ -257,6 +375,7 @@ export class Translator {
       fuzzyMatching: true,
       pluralHandling: true,
       contextAware: true,
+      rootConstruction: true,
     }
 
     const opts = { ...defaultOptions, ...options }
@@ -266,8 +385,9 @@ export class Translator {
         translationText: '',
         phoneticText: '',
         symbolText: '',
-        stats: { direct: 0, partial: 0, missing: 0, total: 0 },
+        stats: { direct: 0, partial: 0, missing: 0, constructed: 0, total: 0 },
         wordAnalysis: {},
+        constructionDetails: {},
       }
     }
 
@@ -277,9 +397,19 @@ export class Translator {
     let directMatches = 0
     let partialMatches = 0
     let missingMatches = 0
+    let constructedMatches = 0
     const wordAnalysis: Record<
       string,
       Array<{ letter: string; root?: EnochianRoot }>
+    > = {}
+    const constructionDetails: Record<
+      string,
+      {
+        original: string
+        result: string
+        method: 'direct' | 'partial' | 'constructed' | 'missing'
+        explanation: string
+      }
     > = {}
 
     // First pass - direct matching
@@ -302,11 +432,21 @@ export class Translator {
       // Handle single-letter words specially (like "I", "a")
       const singleLetterMatch = this.handleSingleLetterWords(word)
       if (singleLetterMatch) {
-        result.push(leadingPunct + singleLetterMatch + trailingPunct)
+        result.push(leadingPunct + singleLetterMatch.result + trailingPunct)
         directMatches++
 
         // Add to word analysis
-        wordAnalysis[singleLetterMatch] = this.analyzeRoots(singleLetterMatch)
+        wordAnalysis[singleLetterMatch.result] = this.analyzeRoots(
+          singleLetterMatch.result,
+        )
+
+        // Add construction details
+        constructionDetails[originalWord] = {
+          original: word,
+          result: singleLetterMatch.result,
+          method: singleLetterMatch.method,
+          explanation: singleLetterMatch.explanation,
+        }
         return
       }
 
@@ -320,6 +460,14 @@ export class Translator {
 
         // Add to word analysis
         wordAnalysis[match] = this.analyzeRoots(match)
+
+        // Add construction details
+        constructionDetails[originalWord] = {
+          original: word,
+          result: match,
+          method: 'direct',
+          explanation: `Direct match found in lexicon: "${word}" → "${match}"`,
+        }
       } else if (
         opts.pluralHandling &&
         word.endsWith('s') &&
@@ -335,6 +483,14 @@ export class Translator {
 
           // Add to word analysis
           wordAnalysis[match] = this.analyzeRoots(match)
+
+          // Add construction details
+          constructionDetails[originalWord] = {
+            original: word,
+            result: match,
+            method: 'direct',
+            explanation: `Matched by removing plural 's': "${word}" → "${singular}" → "${match}"`,
+          }
         } else {
           // Will try partial matching in the next phase
           result.push(null as any)
@@ -373,6 +529,14 @@ export class Translator {
           // Add to word analysis
           wordAnalysis[match] = this.analyzeRoots(match)
 
+          // Add construction details
+          constructionDetails[originalWord] = {
+            original: word,
+            result: match,
+            method: 'partial',
+            explanation: `Partial match via stemming: "${word}" → "${stemmed}" → "${match}"`,
+          }
+
           return leadingPunct + match + trailingPunct
         }
       }
@@ -381,6 +545,7 @@ export class Translator {
       if (opts.fuzzyMatching) {
         let bestMatch: string | null = null
         let bestMatchScore = 0
+        let matchExplanation = ''
 
         // Look through all known meanings
         for (const [meaning, enochianWord] of this.meaningToWordMap.entries()) {
@@ -394,6 +559,9 @@ export class Translator {
             if (score > bestMatchScore) {
               bestMatchScore = score
               bestMatch = enochianWord
+              matchExplanation = meaning.includes(word)
+                ? `Partial match (word found in meaning): "${word}" appears in "${meaning}" → "${enochianWord}"`
+                : `Partial match (meaning found in word): "${meaning}" appears in "${word}" → "${enochianWord}"`
             }
           }
         }
@@ -404,12 +572,50 @@ export class Translator {
           // Add to word analysis
           wordAnalysis[bestMatch] = this.analyzeRoots(bestMatch)
 
+          // Add construction details
+          constructionDetails[originalWord] = {
+            original: word,
+            result: bestMatch,
+            method: 'partial',
+            explanation: matchExplanation,
+          }
+
           return leadingPunct + bestMatch + trailingPunct
+        }
+      }
+
+      // Try root-based construction if enabled
+      if (opts.rootConstruction) {
+        const constructed = this.constructWordFromRoots(word)
+        if (constructed) {
+          constructedMatches++
+
+          // Add to word analysis
+          wordAnalysis[constructed.word] = this.analyzeRoots(constructed.word)
+
+          // Add construction details
+          constructionDetails[originalWord] = {
+            original: word,
+            result: constructed.word,
+            method: 'constructed',
+            explanation: constructed.explanation,
+          }
+
+          return leadingPunct + constructed.word + trailingPunct
         }
       }
 
       // If all matching failed, keep the original word but mark it
       missingMatches++
+
+      // Add construction details for missing word
+      constructionDetails[originalWord] = {
+        original: word,
+        result: `[${word}]`,
+        method: 'missing',
+        explanation: `No match found. Word remains untranslated.`,
+      }
+
       return leadingPunct + `[${word}]` + trailingPunct
     })
 
@@ -432,9 +638,11 @@ export class Translator {
         direct: directMatches,
         partial: partialMatches,
         missing: missingMatches,
+        constructed: constructedMatches,
         total: words.length,
       },
       wordAnalysis,
+      constructionDetails,
     }
   }
 }

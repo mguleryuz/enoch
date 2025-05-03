@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 
 // These are approximate representations - real Enochian letters are more complex
 const enochianLetters = [
@@ -163,9 +162,7 @@ export default function EnochianAlphabet() {
               >
                 <div className="text-2xl font-bold mb-1">{letter.symbol}</div>
                 <div className="text-sm">{letter.english}</div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {letter.enochian}
-                </div>
+                <div className="text-xs mt-1">{letter.enochian}</div>
               </Button>
             ))}
           </div>
@@ -187,7 +184,7 @@ export default function EnochianAlphabet() {
                   {enochianLetters[activeLetterIndex].english} -{' '}
                   {enochianLetters[activeLetterIndex].enochian}
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted">
                   {enochianLetters[activeLetterIndex].description}
                 </p>
 
@@ -226,7 +223,7 @@ export default function EnochianAlphabet() {
             Uriel. The letters form the basis of the Enochian magical system
             used in various occult practices.
           </p>
-          <p className="text-xs text-muted-foreground mt-4">
+          <p className="text-xs text-muted mt-4">
             Note: The symbols shown here are modern approximations using Unicode
             characters. The actual Enochian script has more complex, specific
             calligraphic forms.

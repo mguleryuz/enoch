@@ -27,7 +27,7 @@ function Index() {
           <h1 className="text-3xl md:text-4xl font-bold mb-3">
             Enochian Translator
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted max-w-2xl mx-auto">
             Translate from English to the ancient angelic language of Enochian,
             as recorded by Dr. John Dee and Edward Kelley in the 16th century
           </p>
@@ -100,7 +100,7 @@ function Index() {
           </TabsContent>
         </Tabs>
 
-        <footer className="mt-12 text-center text-muted-foreground text-sm">
+        <footer className="mt-12 text-center text-muted text-sm">
           <p>Based on the Enochian lexicon and root table</p>
           <p className="mt-1">
             <a

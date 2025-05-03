@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
-import { AlertCircle, Check, Copy, Info } from 'lucide-react'
+import { useState } from 'react'
+import { AlertCircle, BookOpen, Check, Copy } from 'lucide-react'
 import { toast } from 'sonner'
+import { useQuery } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,8 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 
 interface EnochianWord {
@@ -21,10 +21,10 @@ interface EnochianWord {
 }
 
 interface EnochianRoot {
-  'English Letter': string
-  'Enochian Name': string
-  'Numeric Value': number
-  Meaning: string
+  english_letter: string
+  enochian_name: string
+  numeric_value: number
+  meaning: string
 }
 
 // Map of English letters to their Enochian letter names
@@ -67,16 +67,31 @@ const enochianLetterMap: Record<string, { name: string; symbol: string }> = {
   ')': { name: ')', symbol: ')' },
 }
 
+// Function to fetch Enochian lexicon data
+const fetchLexiconData = async (): Promise<Array<EnochianWord>> => {
+  const response = await fetch('/enochian_lexicon.json')
+  if (!response.ok) {
+    throw new Error('Failed to fetch lexicon data')
+  }
+  return response.json()
+}
+
+// Function to fetch Enochian root table data
+const fetchRootData = async (): Promise<Array<EnochianRoot>> => {
+  const response = await fetch('/enochian_root_table.json')
+  if (!response.ok) {
+    throw new Error('Failed to fetch root table data')
+  }
+  return response.json()
+}
+
 export default function EnochianTranslator() {
   const [input, setInput] = useState('')
-  const [lexiconData, setLexiconData] = useState<Array<EnochianWord>>([])
-  const [rootData, setRootData] = useState<Array<EnochianRoot>>([])
   const [translationResult, setTranslationResult] = useState<string>('')
   const [phoneticResult, setPhoneticResult] = useState<string>('')
   const [symbolResult, setSymbolResult] = useState<string>('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [rootDetailsView, setRootDetailsView] = useState(false)
   const [matchCounts, setMatchCounts] = useState<{
     direct: number
     partial: number
@@ -86,38 +101,39 @@ export default function EnochianTranslator() {
     'original' | 'phonetic' | 'symbol'
   >('original')
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const lexiconResponse = await fetch('/enochian_lexicon.json')
-        const rootResponse = await fetch('/enochian_root_table.json')
+  // Using React Query to fetch lexicon data
+  const {
+    data: lexiconData = [],
+    isLoading: isLexiconLoading,
+    error: lexiconError,
+  } = useQuery({
+    queryKey: ['enochianLexicon'],
+    queryFn: fetchLexiconData,
+  })
 
-        if (!lexiconResponse.ok || !rootResponse.ok) {
-          throw new Error('Failed to fetch data')
-        }
+  // Using React Query to fetch root table data
+  const {
+    data: rootData = [],
+    isLoading: isRootLoading,
+    error: rootError,
+  } = useQuery({
+    queryKey: ['enochianRoots'],
+    queryFn: fetchRootData,
+  })
 
-        const lexicon = await lexiconResponse.json()
-        const roots = await rootResponse.json()
+  // Using string type assertion to satisfy the linter
+  const errorMessage =
+    lexiconError || rootError
+      ? `Error loading Enochian data: ${(lexiconError || rootError)?.toString()}`
+      : undefined
 
-        setLexiconData(lexicon)
-        setRootData(roots)
-        setLoading(false)
-      } catch (err) {
-        setError('Error loading Enochian data. Please try again later.')
-        setLoading(false)
-        console.error('Error fetching data:', err)
-      }
-    }
-
-    fetchData()
-  }, [])
+  // Check if any data is still loading
+  const isLoading = isLexiconLoading || isRootLoading
 
   // Convert Enochian word to phonetic representation using letter names
   const convertToPhonetic = (word: string): string => {
     return Array.from(word.toLowerCase())
       .map((char) => {
-        // Using hasOwnProperty to check if the character exists in our map
         return char in enochianLetterMap ? enochianLetterMap[char].name : char
       })
       .join('-')
@@ -127,10 +143,28 @@ export default function EnochianTranslator() {
   const convertToSymbols = (word: string): string => {
     return Array.from(word.toLowerCase())
       .map((char) => {
-        // Using hasOwnProperty to check if the character exists in our map
         return char in enochianLetterMap ? enochianLetterMap[char].symbol : char
       })
       .join('')
+  }
+
+  // Find root meaning for a given letter
+  const findRootMeaning = (letter: string): EnochianRoot | undefined => {
+    return rootData.find(
+      (root) => root.english_letter.toLowerCase() === letter.toLowerCase(),
+    )
+  }
+
+  // Function to analyze a word for its root letters and meanings
+  const analyzeRoots = (
+    word: string,
+  ): Array<{ letter: string; root?: EnochianRoot }> => {
+    return Array.from(word.toLowerCase())
+      .filter((char) => /[a-z]/i.test(char)) // Only analyze letters
+      .map((letter) => ({
+        letter,
+        root: findRootMeaning(letter),
+      }))
   }
 
   // This function takes English text and attempts to find Enochian words
@@ -278,26 +312,31 @@ export default function EnochianTranslator() {
     }
   }
 
-  if (loading) {
+  // Extract first word for root analysis
+  const getFirstWordForAnalysis = (): string => {
+    if (!translationResult) return ''
+    const firstWord = translationResult.split(' ')[0]
+    return firstWord && !firstWord.match(/^\[.*\]$/) ? firstWord : ''
+  }
+
+  if (isLoading) {
     return (
       <Card className="w-full">
         <CardContent className="flex flex-col justify-center items-center h-64 py-6">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-          <p className="text-muted-foreground">
-            Loading Enochian dictionary...
-          </p>
+          <p className="text-muted">Loading Enochian dictionary...</p>
         </CardContent>
       </Card>
     )
   }
 
-  if (error) {
+  if (errorMessage) {
     return (
       <Card className="w-full border-destructive">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 text-destructive">
             <AlertCircle size={20} />
-            <p>{error}</p>
+            <p>{errorMessage}</p>
           </div>
         </CardContent>
       </Card>
@@ -361,7 +400,7 @@ export default function EnochianTranslator() {
         </CardContent>
       </Card>
 
-      {(translationResult || error) && (
+      {translationResult.length > 0 && (
         <Card className="border-primary/20">
           <CardHeader className="pb-3">
             <div className="flex justify-between items-center flex-wrap gap-3">
@@ -386,91 +425,141 @@ export default function EnochianTranslator() {
                 </TabsList>
               </Tabs>
             </div>
-            {!error && (
-              <CardDescription>
-                {displayMode === 'original'
-                  ? 'Enochian words translated from English'
-                  : displayMode === 'phonetic'
-                    ? 'Phonetic pronunciation using Enochian letter names'
-                    : 'Visual representation using Enochian symbols'}
-              </CardDescription>
-            )}
+            <CardDescription>
+              {displayMode === 'original'
+                ? 'Enochian words translated from English'
+                : displayMode === 'phonetic'
+                  ? 'Phonetic pronunciation using Enochian letter names'
+                  : 'Visual representation using Enochian symbols'}
+            </CardDescription>
           </CardHeader>
 
           <CardContent>
-            {error ? (
-              <div className="flex items-center text-destructive gap-2 p-4 bg-destructive/10 rounded-md">
-                <AlertCircle size={20} />
-                <span className="font-medium">{error}</span>
-              </div>
-            ) : (
-              <>
-                <div className="relative">
-                  <div className="bg-muted/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
-                    {displayMode === 'original' && translationResult}
-                    {displayMode === 'phonetic' && phoneticResult}
-                    {displayMode === 'symbol' && (
-                      <span className="text-xl tracking-wide">
-                        {symbolResult}
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
-                    onClick={() => handleCopy(displayMode)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {showDetails && (
-                  <div className="mt-5 pt-4 border-t">
-                    <div className="text-sm font-medium mb-3">
-                      Translation Statistics:
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1 py-1 px-2"
-                      >
-                        <Check className="h-3.5 w-3.5 text-green-500" />
-                        <span>
-                          {matchCounts.direct} direct{' '}
-                          {matchCounts.direct === 1 ? 'match' : 'matches'}
-                        </span>
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1 py-1 px-2"
-                      >
-                        <Check className="h-3.5 w-3.5 text-yellow-500" />
-                        <span>
-                          {matchCounts.partial} partial{' '}
-                          {matchCounts.partial === 1 ? 'match' : 'matches'}
-                        </span>
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1 py-1 px-2"
-                      >
-                        <AlertCircle className="h-3.5 w-3.5 text-destructive" />
-                        <span>
-                          {matchCounts.missing} missing{' '}
-                          {matchCounts.missing === 1 ? 'word' : 'words'}
-                        </span>
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-3">
-                      Words in [brackets] have no direct Enochian equivalent and
-                      remain in English
-                    </p>
-                  </div>
+            <div className="relative">
+              <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
+                {displayMode === 'original' && translationResult}
+                {displayMode === 'phonetic' && phoneticResult}
+                {displayMode === 'symbol' && (
+                  <span className="text-xl tracking-wide">{symbolResult}</span>
                 )}
-              </>
+              </div>
+              <Button
+                size="icon"
+                variant="outline"
+                className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
+                onClick={() => handleCopy(displayMode)}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {showDetails && (
+              <div className="mt-5 pt-4 border-t">
+                <div className="text-sm font-medium mb-3">
+                  Translation Statistics:
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Badge
+                    variant="outline"
+                    className="flex items-center gap-1 py-1 px-2"
+                  >
+                    <Check className="h-3.5 w-3.5 text-green-500" />
+                    <span>
+                      {matchCounts.direct} direct{' '}
+                      {matchCounts.direct === 1 ? 'match' : 'matches'}
+                    </span>
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="flex items-center gap-1 py-1 px-2"
+                  >
+                    <Check className="h-3.5 w-3.5 text-yellow-500" />
+                    <span>
+                      {matchCounts.partial} partial{' '}
+                      {matchCounts.partial === 1 ? 'match' : 'matches'}
+                    </span>
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="flex items-center gap-1 py-1 px-2"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                    <span>
+                      {matchCounts.missing} missing{' '}
+                      {matchCounts.missing === 1 ? 'word' : 'words'}
+                    </span>
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted mt-3">
+                  Words in [brackets] have no direct Enochian equivalent and
+                  remain in English
+                </p>
+              </div>
             )}
           </CardContent>
+          <CardFooter className="flex flex-col items-start pt-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-1"
+              onClick={() => setRootDetailsView(!rootDetailsView)}
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>
+                {rootDetailsView ? 'Hide Root Analysis' : 'Show Root Analysis'}
+              </span>
+            </Button>
+
+            {rootDetailsView && (
+              <div className="w-full mt-3 border-t pt-3">
+                <h4 className="text-sm font-medium mb-2">
+                  Enochian Root Analysis:
+                </h4>
+                <div className="bg-accent/30 rounded-md p-4 border">
+                  {getFirstWordForAnalysis() ? (
+                    <div className="space-y-3">
+                      <p className="text-sm mb-1">
+                        Analysis of:{' '}
+                        <span className="font-semibold">
+                          {getFirstWordForAnalysis()}
+                        </span>
+                      </p>
+                      <div className="grid gap-2">
+                        {analyzeRoots(getFirstWordForAnalysis()).map(
+                          (item, idx) => (
+                            <div
+                              key={idx}
+                              className="border-b border-border/30 pb-2 last:border-0 last:pb-0"
+                            >
+                              <p className="font-medium">
+                                {item.letter.toUpperCase()} •{' '}
+                                {item.root?.enochian_name || 'Unknown'}
+                                {item.root && ` (${item.root.numeric_value})`}
+                              </p>
+                              {item.root ? (
+                                <p className="text-sm text-muted">
+                                  {item.root.meaning}
+                                </p>
+                              ) : (
+                                <p className="text-sm text-muted italic">
+                                  No root information available
+                                </p>
+                              )}
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted italic">
+                      Translate a phrase first to see root analysis of the first
+                      Enochian word
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardFooter>
         </Card>
       )}
     </div>

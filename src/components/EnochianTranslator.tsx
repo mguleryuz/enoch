@@ -99,7 +99,7 @@ export default function EnochianTranslator() {
   }>({ direct: 0, partial: 0, missing: 0 })
   const [displayMode, setDisplayMode] = useState<
     'original' | 'phonetic' | 'symbol'
-  >('original')
+  >('phonetic')
 
   // Using React Query to fetch lexicon data
   const {
@@ -413,11 +413,11 @@ export default function EnochianTranslator() {
                 className="w-auto"
               >
                 <TabsList className="grid grid-cols-3 h-9">
-                  <TabsTrigger value="original" className="px-3">
-                    Words
-                  </TabsTrigger>
                   <TabsTrigger value="phonetic" className="px-3">
                     Phonetic
+                  </TabsTrigger>
+                  <TabsTrigger value="original" className="px-3">
+                    Words
                   </TabsTrigger>
                   <TabsTrigger value="symbol" className="px-3">
                     Symbols

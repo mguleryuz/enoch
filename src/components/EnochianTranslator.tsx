@@ -31,7 +31,7 @@ export default function EnochianTranslator() {
   }>({ direct: 0, partial: 0, missing: 0, total: 0 })
   const [displayMode, setDisplayMode] = useState<
     'original' | 'phonetic' | 'symbol'
-  >('original')
+  >('phonetic')
   const [wordToAnalyze, setWordToAnalyze] = useState('')
   const [wordAnalysis, setWordAnalysis] = useState<
     Record<string, Array<{ letter: string; root?: any }>>
@@ -112,11 +112,11 @@ export default function EnochianTranslator() {
   const handleCopy = (type: 'original' | 'phonetic' | 'symbol') => {
     let textToCopy = ''
     switch (type) {
-      case 'original':
-        textToCopy = translationResult
-        break
       case 'phonetic':
         textToCopy = phoneticResult
+        break
+      case 'original':
+        textToCopy = translationResult
         break
       case 'symbol':
         textToCopy = symbolResult
@@ -273,11 +273,11 @@ export default function EnochianTranslator() {
                 className="w-auto"
               >
                 <TabsList className="grid grid-cols-3 h-9">
-                  <TabsTrigger value="original" className="px-3">
-                    Words
-                  </TabsTrigger>
                   <TabsTrigger value="phonetic" className="px-3">
                     Phonetic
+                  </TabsTrigger>
+                  <TabsTrigger value="original" className="px-3">
+                    Words
                   </TabsTrigger>
                   <TabsTrigger value="symbol" className="px-3">
                     Symbols

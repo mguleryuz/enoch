@@ -2,14 +2,15 @@ import { Link } from '@tanstack/react-router'
 
 export default function Header() {
   return (
-    <header className="p-2 flex gap-2 bg-white text-black justify-between">
+    <header className="p-2 flex gap-2 bg-foreground/5 shadow-sm items-center justify-between">
       <nav className="flex flex-row">
         <div className="px-2 font-bold">
-          <Link to="/">Home</Link>
-        </div>
-
-        <div className="px-2 font-bold">
-          <Link to="/demo/tanstack-query">TanStack Query</Link>
+          <Link
+            to="/"
+            className="text-primary hover:text-primary/80 transition-colors"
+          >
+            Enochian Translator
+          </Link>
         </div>
       </nav>
     </header>

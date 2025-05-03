@@ -1,39 +1,119 @@
 import { createFileRoute } from '@tanstack/react-router'
-import logo from '../logo.svg'
+import { useState } from 'react'
+import { ChevronDown, Info } from 'lucide-react'
+import EnochianAlphabet from '../components/EnochianAlphabet'
+import EnochianTranslator from '../components/EnochianTranslator'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const Route = createFileRoute('/')({
-  component: App,
+  component: Index,
 })
 
-function App() {
+function Index() {
+  const [showInfo, setShowInfo] = useState(true)
+
   return (
-    <div className="text-center">
-      <header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
-        <img
-          src={logo}
-          className="h-[40vmin] pointer-events-none animate-[spin_20s_linear_infinite]"
-          alt="logo"
-        />
-        <p>
-          Edit <code>src/routes/index.tsx</code> and save to reload.
-        </p>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://tanstack.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn TanStack
-        </a>
-      </header>
+    <div className="min-h-screen bg-background py-6 md:py-10">
+      <div className="container px-4 mx-auto max-w-5xl">
+        <header className="mb-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+            Enochian Translator
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Translate from English to the ancient angelic language of Enochian,
+            as recorded by Dr. John Dee and Edward Kelley in the 16th century
+          </p>
+        </header>
+
+        <Card className="mb-6 border-primary/20">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg">About Enochian</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => setShowInfo(!showInfo)}
+              >
+                {showInfo ? 'Hide' : 'Show'}
+                <ChevronDown
+                  className={`ml-1 h-4 w-4 transition-transform ${showInfo ? 'rotate-180' : ''}`}
+                />
+              </Button>
+            </div>
+            <CardDescription>
+              The celestial language of the angels
+            </CardDescription>
+          </CardHeader>
+
+          {showInfo && (
+            <CardContent className="pt-0">
+              <div className="space-y-3 text-sm">
+                <p>
+                  Enochian is a mysterious language reportedly revealed to Dr.
+                  John Dee and Edward Kelley during spiritual communications
+                  between 1582 and 1589. Named after the biblical figure Enoch,
+                  it was purportedly the language used by angels.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
+                  <div className="p-2 bg-accent rounded-md text-center">
+                    <strong>Writing System:</strong> 21 letters
+                  </div>
+                  <div className="p-2 bg-accent rounded-md text-center">
+                    <strong>Word Order:</strong> VSO
+                  </div>
+                  <div className="p-2 bg-accent rounded-md text-center">
+                    <strong>Structure:</strong> Agglutinative
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
+        <Tabs responsive defaultValue="translator" className="mx-auto mb-10">
+          <TabsList className="w-full grid grid-cols-2 mb-6 p-1">
+            <TabsTrigger value="translator" className="py-3 text-base">
+              <Info className="mr-2 h-4 w-4" />
+              Translator
+            </TabsTrigger>
+            <TabsTrigger value="alphabet" className="py-3 text-base">
+              <span className="mr-2 font-bold">Aa</span>
+              Enochian Alphabet
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="translator">
+            <EnochianTranslator />
+          </TabsContent>
+
+          <TabsContent value="alphabet">
+            <EnochianAlphabet />
+          </TabsContent>
+        </Tabs>
+
+        <footer className="mt-12 text-center text-muted-foreground text-sm">
+          <p>Based on the Enochian lexicon and root table</p>
+          <p className="mt-1">
+            <a
+              href="https://en.wikipedia.org/wiki/Enochian"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary/80 transition-colors"
+            >
+              Learn more about Enochian
+            </a>
+          </p>
+        </footer>
+      </div>
     </div>
   )
 }

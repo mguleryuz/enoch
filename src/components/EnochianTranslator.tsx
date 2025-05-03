@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertCircle, BookOpen, Check, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { EnochianTranslator as C } from '@/lib/translator'
 
 interface EnochianWord {
   word: string
@@ -57,10 +58,18 @@ export default function EnochianTranslator() {
     direct: number
     partial: number
     missing: number
-  }>({ direct: 0, partial: 0, missing: 0 })
+    total: number
+  }>({ direct: 0, partial: 0, missing: 0, total: 0 })
   const [displayMode, setDisplayMode] = useState<
     'original' | 'phonetic' | 'symbol'
   >('phonetic')
+  const [wordToAnalyze, setWordToAnalyze] = useState('')
+  const [wordAnalysis, setWordAnalysis] = useState<
+    Record<string, Array<{ letter: string; root?: any }>>
+  >({})
+  const [currentAnalysis, setCurrentAnalysis] = useState<
+    Array<{ letter: string; root?: any }>
+  >([])
 
   // Using React Query to fetch lexicon data
   const {
@@ -82,181 +91,52 @@ export default function EnochianTranslator() {
     queryFn: fetchRootData,
   })
 
-  // Create a letter map from the root data for easier access
-  const enochianLetterMap = rootData.reduce<
-    Record<string, { name: string; symbol: string }>
-  >((map, root) => {
-    const letter = root.english_letter.toLowerCase()
-    if (letter) {
-      map[letter] = {
-        name: root.enochian_name,
-        symbol: root.symbol,
-      }
-    }
-    return map
-  }, {})
+  // Using React Query to load the translator service
+  const {
+    data: translator,
+    isLoading: translatorLoading,
+    error: translatorError,
+  } = useQuery({
+    queryKey: ['enochianTranslator'],
+    queryFn: async () => {
+      return new C(lexiconData, rootData)
+    },
+    enabled: !!lexiconData.length && !!rootData.length,
+  })
 
-  // Using string type assertion to satisfy the linter
-  const errorMessage =
-    lexiconError || rootError
-      ? `Error loading Enochian data: ${(lexiconError || rootError)?.toString()}`
-      : undefined
+  // Update current analysis whenever wordToAnalyze or wordAnalysis changes
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const analysis = wordToAnalyze ? wordAnalysis[wordToAnalyze] || [] : []
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  const loading = lexiconLoading || rootLoading
+    setCurrentAnalysis(analysis)
+  }, [wordToAnalyze, wordAnalysis])
 
-  // Convert Enochian word to phonetic representation using letter names
-  const convertToPhonetic = (word: string): string => {
-    return Array.from(word.toLowerCase())
-      .map((char) => {
-        return char in enochianLetterMap ? enochianLetterMap[char].name : char
-      })
-      .join('-')
-  }
+  // Error message handling
+  const errorMessage = translatorError
+    ? `Error loading Enochian data: ${translatorError.toString()}`
+    : undefined
 
-  // Convert Enochian word to symbolic representation
-  const convertToSymbols = (word: string): string => {
-    return Array.from(word.toLowerCase())
-      .map((char) => {
-        return char in enochianLetterMap ? enochianLetterMap[char].symbol : char
-      })
-      .join('')
-  }
-
-  // Find root meaning for a given letter
-  const findRootMeaning = (letter: string): EnochianRoot | undefined => {
-    return rootData.find(
-      (root) => root.english_letter.toLowerCase() === letter.toLowerCase(),
-    )
-  }
-
-  // Function to analyze a word for its root letters and meanings
-  const analyzeRoots = (
-    word: string,
-  ): Array<{ letter: string; root?: EnochianRoot }> => {
-    return Array.from(word.toLowerCase())
-      .filter((char) => /[a-z]/i.test(char)) // Only analyze letters
-      .map((letter) => ({
-        letter,
-        root: findRootMeaning(letter),
-      }))
-  }
-
-  // This function takes English text and attempts to find Enochian words
-  const translateText = (text: string) => {
-    if (!text.trim()) {
-      setTranslationResult('')
-      setPhoneticResult('')
-      setSymbolResult('')
-      setMatchCounts({ direct: 0, partial: 0, missing: 0 })
-      return
-    }
-
-    // Split the input into words
-    const words = text.toLowerCase().split(/\s+/)
-    let result = ''
-    let directMatches = 0
-    let partialMatches = 0
-    let missingMatches = 0
-
-    // Create a map for faster lookup (meaning -> word)
-    const meaningToWord = new Map<string, string>()
-
-    lexiconData.forEach((entry) => {
-      // Clean up the meaning by removing dashes, parentheses, etc.
-      const cleanedMeaning = entry.meaning
-        .toLowerCase()
-        .replace(/^-\s*/, '') // Remove leading dash
-        .replace(/\(.*?\)/g, '') // Remove text in parentheses
-        .trim()
-
-      // If the meaning includes multiple words or phrases (separated by commas)
-      cleanedMeaning.split(/,|;/).forEach((meaningPart) => {
-        const trimmedMeaning = meaningPart.trim()
-        if (trimmedMeaning) {
-          meaningToWord.set(trimmedMeaning, entry.word)
-        }
-      })
-    })
-
-    // Try to match each word
-    words.forEach((word, index) => {
-      // Skip punctuation-only words
-      if (/^[.,;:!?'"()-]+$/.test(word)) {
-        result += word
-        if (index < words.length - 1) {
-          result += ' '
-        }
-        return
-      }
-
-      // Look for direct matches first
-      if (meaningToWord.has(word)) {
-        result += meaningToWord.get(word)
-        directMatches++
-      } else {
-        // Look for partial matches
-        let found = false
-        for (const [meaning, enochianWord] of meaningToWord.entries()) {
-          // Check if meaning contains word or word contains meaning
-          if (meaning.includes(word) || word.includes(meaning)) {
-            result += enochianWord
-            found = true
-            partialMatches++
-            break
-          }
-        }
-
-        // If no match found, keep the original word but mark it
-        if (!found) {
-          result += `[${word}]`
-          missingMatches++
-        }
-      }
-
-      // Add space between words
-      if (index < words.length - 1) {
-        result += ' '
-      }
-    })
-
-    // Generate the phonetic and symbolic versions
-    const phonetic = result
-      .split(' ')
-      .map((word) => {
-        if (word.startsWith('[') && word.endsWith(']')) {
-          return word // Keep the [word] format for untranslated words
-        }
-        return convertToPhonetic(word)
-      })
-      .join(' ')
-
-    const symbols = result
-      .split(' ')
-      .map((word) => {
-        if (word.startsWith('[') && word.endsWith(']')) {
-          return word // Keep the [word] format for untranslated words
-        }
-        return convertToSymbols(word)
-      })
-      .join(' ')
-
-    setTranslationResult(result)
-    setPhoneticResult(phonetic)
-    setSymbolResult(symbols)
-    setMatchCounts({
-      direct: directMatches,
-      partial: partialMatches,
-      missing: missingMatches,
-    })
-  }
+  const loading = translatorLoading || lexiconLoading || rootLoading
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
   }
 
   const handleTranslate = () => {
-    translateText(input)
+    if (!translator || !input.trim()) return
+
+    const result = translator.translate(input)
+
+    setTranslationResult(result.translationText)
+    setPhoneticResult(result.phoneticText)
+    setSymbolResult(result.symbolText)
+    setMatchCounts(result.stats)
+    setWordAnalysis(result.wordAnalysis)
+
+    // Get first word for analysis if available
+    const firstEnochianWord = getFirstWordForAnalysis(result.translationText)
+    setWordToAnalyze(firstEnochianWord)
   }
 
   const handleCopy = (type: 'original' | 'phonetic' | 'symbol') => {
@@ -288,13 +168,55 @@ export default function EnochianTranslator() {
   }
 
   // Extract first word for root analysis
-  const getFirstWordForAnalysis = (): string => {
-    if (!translationResult) return ''
-    const firstWord = translationResult.split(' ')[0]
-    return firstWord && !firstWord.match(/^\[.*\]$/) ? firstWord : ''
+  const getFirstWordForAnalysis = (text: string): string => {
+    if (!text) return ''
+    const firstWord = text.split(' ')[0]
+    // Only return the word if it's a valid Enochian word (not marked with brackets)
+    const isValidWord = firstWord && !firstWord.match(/^\[.*\]$/)
+    return isValidWord ? firstWord : ''
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  // Replace the root analysis rendering section
+  const renderRootAnalysis = () => {
+    if (currentAnalysis.length === 0) {
+      return (
+        <p className="text-sm text-muted italic">
+          Translate a phrase first to see root analysis of the first Enochian
+          word
+        </p>
+      )
+    }
+
+    return (
+      <div className="space-y-3">
+        <p className="text-sm mb-1">
+          Analysis of: <span className="font-semibold">{wordToAnalyze}</span>
+        </p>
+        <div className="grid gap-2">
+          {currentAnalysis.map((item, idx) => (
+            <div
+              key={idx}
+              className="border-b border-border/30 pb-2 last:border-0 last:pb-0"
+            >
+              <p className="font-medium">
+                {item.letter.toUpperCase()} •{' '}
+                {item.root?.enochian_name || 'Unknown'}
+                {item.root && ` (${item.root.numeric_value})`}
+              </p>
+              {item.root ? (
+                <p className="text-sm text-muted">{item.root.meaning}</p>
+              ) : (
+                <p className="text-sm text-muted italic">
+                  No root information available
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return loading ? (
     <Card className="w-full">
       <CardContent className="flex flex-col justify-center items-center h-64 py-6">
@@ -457,6 +379,15 @@ export default function EnochianTranslator() {
                       {matchCounts.missing === 1 ? 'word' : 'words'}
                     </span>
                   </Badge>
+                  <Badge
+                    variant="outline"
+                    className="flex items-center gap-1 py-1 px-2"
+                  >
+                    <span>
+                      {matchCounts.total} total{' '}
+                      {matchCounts.total === 1 ? 'word' : 'words'}
+                    </span>
+                  </Badge>
                 </div>
                 <p className="text-xs text-muted mt-3">
                   Words in [brackets] have no direct Enochian equivalent and
@@ -484,46 +415,7 @@ export default function EnochianTranslator() {
                   Enochian Root Analysis:
                 </h4>
                 <div className="bg-accent/30 rounded-md p-4 border">
-                  {getFirstWordForAnalysis() ? (
-                    <div className="space-y-3">
-                      <p className="text-sm mb-1">
-                        Analysis of:{' '}
-                        <span className="font-semibold">
-                          {getFirstWordForAnalysis()}
-                        </span>
-                      </p>
-                      <div className="grid gap-2">
-                        {analyzeRoots(getFirstWordForAnalysis()).map(
-                          (item, idx) => (
-                            <div
-                              key={idx}
-                              className="border-b border-border/30 pb-2 last:border-0 last:pb-0"
-                            >
-                              <p className="font-medium">
-                                {item.letter.toUpperCase()} •{' '}
-                                {item.root?.enochian_name || 'Unknown'}
-                                {item.root && ` (${item.root.numeric_value})`}
-                              </p>
-                              {item.root ? (
-                                <p className="text-sm text-muted">
-                                  {item.root.meaning}
-                                </p>
-                              ) : (
-                                <p className="text-sm text-muted italic">
-                                  No root information available
-                                </p>
-                              )}
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted italic">
-                      Translate a phrase first to see root analysis of the first
-                      Enochian word
-                    </p>
-                  )}
+                  {renderRootAnalysis()}
                 </div>
               </div>
             )}

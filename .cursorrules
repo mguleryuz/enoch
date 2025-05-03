@@ -1,0 +1,56 @@
+# Enoch Project Rules
+
+## Code Organization
+
+- React components are organized in `src/components`
+- UI components are in `src/components/ui`
+- Feature components are at the root of `src/components`
+- Data files (JSON) are stored in the `public` directory
+
+## Naming Conventions
+
+- Component files use PascalCase (e.g., EnochianTranslator.tsx)
+- UI component files use camelCase (e.g., button.tsx)
+- Use descriptive names that reflect component functionality
+
+## TypeScript Patterns
+
+- Define interfaces for component props
+- Define interfaces for data structures
+- Use TypeScript's strict mode
+- Use proper type annotations for function parameters and returns
+
+## State Management
+
+- Use React's useState for component-level state
+- Use React Query for data fetching and server state
+- Prefer function components with hooks over class components
+
+## UI Patterns
+
+- Use the Card component for content sections
+- Use Tabs for switching between different views
+- Use Button components for interactive elements
+- Use Badge components for status indicators
+- Follow established styling patterns from existing components
+
+## Data Handling
+
+- Fetch data using React Query's useQuery hook
+- Handle loading states with skeleton loaders or spinners
+- Handle error states with appropriate error messages
+- Use try/catch blocks for error handling
+
+## Feature Patterns
+
+- Translation uses dictionary lookup with fallbacks
+- Mark untranslated words with brackets [like this]
+- Provide multiple display options (words, phonetic, symbols)
+- Include relevant statistics and analytics where appropriate
+
+## Documentation
+
+- Include JSDoc comments for complex functions
+- Document key decisions in code comments
+- Keep Memory Bank up to date with latest changes
+- Document any special handling or edge cases

@@ -25,46 +25,7 @@ interface EnochianRoot {
   enochian_name: string
   numeric_value: number
   meaning: string
-}
-
-// Map of English letters to their Enochian letter names
-const enochianLetterMap: Record<string, { name: string; symbol: string }> = {
-  a: { name: 'Un', symbol: '⟨∀⟩' },
-  b: { name: 'Pe', symbol: '⟨б⟩' },
-  c: { name: 'Veh', symbol: '⟨ↄ⟩' },
-  d: { name: 'Gal', symbol: '⟨Б⟩' },
-  e: { name: 'Graph', symbol: '⟨Э⟩' },
-  f: { name: 'Orth', symbol: '⟨Φ⟩' },
-  g: { name: 'Ged', symbol: '⟨Г⟩' },
-  h: { name: 'Na-hath', symbol: '⟨Н⟩' },
-  i: { name: 'Gon', symbol: '⟨I⟩' },
-  j: { name: 'Gon', symbol: '⟨I⟩' }, // Using same as 'i'
-  k: { name: 'Veh', symbol: '⟨ↄ⟩' }, // Using same as 'c'
-  l: { name: 'Ur', symbol: '⟨Л⟩' },
-  m: { name: 'Tal', symbol: '⟨М⟩' },
-  n: { name: 'Drun', symbol: '⟨И⟩' },
-  o: { name: 'Med', symbol: '⟨О⟩' },
-  p: { name: 'Mals', symbol: '⟨Π⟩' },
-  q: { name: 'Ger', symbol: '⟨Ψ⟩' },
-  r: { name: 'Don', symbol: '⟨Я⟩' },
-  s: { name: 'Fam', symbol: '⟨∑⟩' },
-  t: { name: 'Gisa', symbol: '⟨Т⟩' },
-  u: { name: 'Val', symbol: '⟨∪⟩' },
-  v: { name: 'Val', symbol: '⟨∪⟩' },
-  w: { name: 'Val', symbol: '⟨∪⟩' }, // Using same as 'v'
-  x: { name: 'Pal', symbol: '⟨Ж⟩' },
-  y: { name: 'Gon', symbol: '⟨I⟩' }, // Using same as 'i'
-  z: { name: 'Ceph', symbol: '⟨Ζ⟩' },
-  ' ': { name: ' ', symbol: ' ' },
-  '.': { name: '.', symbol: '.' },
-  ',': { name: ',', symbol: ',' },
-  '!': { name: '!', symbol: '!' },
-  '?': { name: '?', symbol: '?' },
-  ';': { name: ';', symbol: ';' },
-  ':': { name: ':', symbol: ':' },
-  '-': { name: '-', symbol: '-' },
-  '(': { name: '(', symbol: '(' },
-  ')': { name: ')', symbol: ')' },
+  symbol: string
 }
 
 // Function to fetch Enochian lexicon data
@@ -120,6 +81,20 @@ export default function EnochianTranslator() {
     queryKey: ['enochianRoots'],
     queryFn: fetchRootData,
   })
+
+  // Create a letter map from the root data for easier access
+  const enochianLetterMap = rootData.reduce<
+    Record<string, { name: string; symbol: string }>
+  >((map, root) => {
+    const letter = root.english_letter.toLowerCase()
+    if (letter) {
+      map[letter] = {
+        name: root.enochian_name,
+        symbol: root.symbol,
+      }
+    }
+    return map
+  }, {})
 
   // Using string type assertion to satisfy the linter
   const errorMessage =

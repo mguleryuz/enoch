@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -8,130 +9,62 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-// These are approximate representations - real Enochian letters are more complex
-const enochianLetters = [
-  { english: 'A', enochian: 'Un', description: 'Root of Time', symbol: '⟨∀⟩' },
-  {
-    english: 'B',
-    enochian: 'Pe',
-    description: 'Root of Choice',
-    symbol: '⟨б⟩',
-  },
-  { english: 'C', enochian: 'Veh', description: 'Conjunction', symbol: '⟨ↄ⟩' },
-  {
-    english: 'D',
-    enochian: 'Gal',
-    description: 'Root of Possibility',
-    symbol: '⟨Б⟩',
-  },
-  {
-    english: 'E',
-    enochian: 'Graph',
-    description: 'Root of Will',
-    symbol: '⟨Э⟩',
-  },
-  {
-    english: 'F',
-    enochian: 'Orth',
-    description: 'Root of Manifestation',
-    symbol: '⟨Φ⟩',
-  },
-  {
-    english: 'G',
-    enochian: 'Ged',
-    description: 'Root of Negation',
-    symbol: '⟨Г⟩',
-  },
-  {
-    english: 'H',
-    enochian: 'Na-hath',
-    description: 'Root of Increase',
-    symbol: '⟨Н⟩',
-  },
-  {
-    english: 'I',
-    enochian: 'Gon',
-    description: 'Root of Energy',
-    symbol: '⟨I⟩',
-  },
-  {
-    english: 'L',
-    enochian: 'Ur',
-    description: 'Root of Breath',
-    symbol: '⟨Л⟩',
-  },
-  {
-    english: 'M',
-    enochian: 'Tal',
-    description: 'Root of Knowledge',
-    symbol: '⟨М⟩',
-  },
-  {
-    english: 'N',
-    enochian: 'Drun',
-    description: 'Root of Desire',
-    symbol: '⟨И⟩',
-  },
-  {
-    english: 'O',
-    enochian: 'Med',
-    description: 'Root of Limitation',
-    symbol: '⟨О⟩',
-  },
-  {
-    english: 'P',
-    enochian: 'Mals',
-    description: 'Root of Primacy',
-    symbol: '⟨Π⟩',
-  },
-  {
-    english: 'Q',
-    enochian: 'Ger',
-    description: 'Root of Establishment',
-    symbol: '⟨Ψ⟩',
-  },
-  {
-    english: 'R',
-    enochian: 'Don',
-    description: 'Root of Being',
-    symbol: '⟨Я⟩',
-  },
-  {
-    english: 'S',
-    enochian: 'Fam',
-    description: 'Root of Possession',
-    symbol: '⟨∑⟩',
-  },
-  {
-    english: 'T',
-    enochian: 'Gisa',
-    description: 'Root of Balance',
-    symbol: '⟨Т⟩',
-  },
-  {
-    english: 'U/V',
-    enochian: 'Val',
-    description: 'Root of Division',
-    symbol: '⟨∪⟩',
-  },
-  {
-    english: 'X',
-    enochian: 'Pal',
-    description: 'Root of Interiority',
-    symbol: '⟨Ж⟩',
-  },
-  {
-    english: 'Z',
-    enochian: 'Ceph',
-    description: 'Root of Movement',
-    symbol: '⟨Ζ⟩',
-  },
-]
+interface EnochianRoot {
+  english_letter: string
+  enochian_name: string
+  numeric_value: number
+  meaning: string
+  symbol: string
+}
+
+// Function to fetch Enochian root table data
+const fetchRootData = async (): Promise<Array<EnochianRoot>> => {
+  const response = await fetch('/enochian_root_table.json')
+  if (!response.ok) {
+    throw new Error('Failed to fetch root table data')
+  }
+  return response.json()
+}
 
 export default function EnochianAlphabet() {
   const [activeLetterIndex, setActiveLetterIndex] = useState<number | null>(
     null,
   )
+
+  // Using React Query to fetch root table data
+  const {
+    data: enochianLetters = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['enochianRoots'],
+    queryFn: fetchRootData,
+    select: (data) =>
+      data.filter((letter) => letter.english_letter.match(/^[A-Z]$/)),
+  })
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col justify-center items-center h-64 py-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <p className="text-muted">Loading Enochian alphabet...</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full border-destructive">
+        <CardContent className="pt-6">
+          <div className="text-destructive">
+            Error loading alphabet data: {error.toString()}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -147,7 +80,7 @@ export default function EnochianAlphabet() {
           <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 gap-3">
             {enochianLetters.map((letter, index) => (
               <Button
-                key={letter.english}
+                key={letter.english_letter}
                 variant={activeLetterIndex === index ? 'default' : 'outline'}
                 className={`h-auto py-4 px-2 flex flex-col items-center transition-all ${
                   activeLetterIndex === index
@@ -161,8 +94,8 @@ export default function EnochianAlphabet() {
                 }
               >
                 <div className="text-2xl font-bold mb-1">{letter.symbol}</div>
-                <div className="text-sm">{letter.english}</div>
-                <div className="text-xs mt-1">{letter.enochian}</div>
+                <div className="text-sm">{letter.english_letter}</div>
+                <div className="text-xs mt-1">{letter.enochian_name}</div>
               </Button>
             ))}
           </div>
@@ -181,22 +114,29 @@ export default function EnochianAlphabet() {
 
               <div className="flex-grow text-center md:text-left">
                 <h3 className="text-xl font-bold mb-2">
-                  {enochianLetters[activeLetterIndex].english} -{' '}
-                  {enochianLetters[activeLetterIndex].enochian}
+                  {enochianLetters[activeLetterIndex].english_letter} -{' '}
+                  {enochianLetters[activeLetterIndex].enochian_name}
                 </h3>
                 <p className="text-muted">
-                  {enochianLetters[activeLetterIndex].description}
+                  {enochianLetters[activeLetterIndex].meaning}
                 </p>
 
                 <div className="mt-4 pt-4 border-t">
                   <h4 className="font-medium mb-2">Usage in Enochian:</h4>
                   <p className="text-sm">
-                    The letter {enochianLetters[activeLetterIndex].english} (
-                    {enochianLetters[activeLetterIndex].enochian}) represents
-                    the{' '}
-                    {enochianLetters[
-                      activeLetterIndex
-                    ].description.toLowerCase()}
+                    The letter{' '}
+                    {enochianLetters[activeLetterIndex].english_letter} (
+                    {enochianLetters[activeLetterIndex].enochian_name})
+                    represents the{' '}
+                    {enochianLetters[activeLetterIndex].meaning
+                      .toLowerCase()
+                      .includes('root of')
+                      ? enochianLetters[activeLetterIndex].meaning
+                          .split(':')[0]
+                          .toLowerCase()
+                      : enochianLetters[
+                          activeLetterIndex
+                        ].meaning.toLowerCase()}{' '}
                     in Enochian language. Each letter has metaphysical
                     significance beyond its phonetic value.
                   </p>

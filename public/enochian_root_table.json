@@ -1,140 +1,254 @@
 [
   {
+    "english_letter": "A",
+    "enochian_name": "Un",
+    "numeric_value": 6,
+    "meaning": "Root of Time: begin, beginning; new, anew; again, then, when",
+    "symbol": "⟨∀⟩"
+  },
+  {
     "english_letter": "B",
     "enochian_name": "Pe",
     "numeric_value": 1,
-    "meaning": "Root of Choice: duality, multiplicity, choose (between)"
+    "meaning": "Root of Choice: duality, multiplicity, choose (between)",
+    "symbol": "⟨б⟩"
   },
   {
-    "english_letter": "K",
+    "english_letter": "C",
     "enochian_name": "Veh",
     "numeric_value": 2,
-    "meaning": "Root of Causation: make, cause, create, because (of)"
-  },
-  {
-    "english_letter": "G",
-    "enochian_name": "Ged",
-    "numeric_value": 3,
-    "meaning": "Root of Negation: not, none, nothing, nor"
+    "meaning": "Conjunction",
+    "symbol": "⟨ↄ⟩"
   },
   {
     "english_letter": "D",
     "enochian_name": "Gal",
     "numeric_value": 4,
-    "meaning": "Root of Possibility: possible, potential"
-  },
-  {
-    "english_letter": "F",
-    "enochian_name": "Orth",
-    "numeric_value": 5,
-    "meaning": "Root of Manifestation: manifest, show, appear"
-  },
-  {
-    "english_letter": "A",
-    "enochian_name": "Un",
-    "numeric_value": 6,
-    "meaning": "Root of Time: begin, beginning; new, anew; again, then, when"
+    "meaning": "Root of Possibility: possible, potential",
+    "symbol": "⟨Б⟩"
   },
   {
     "english_letter": "E",
     "enochian_name": "Graph",
     "numeric_value": 7,
-    "meaning": "Root of Will: will, intend, purpose, intention"
+    "meaning": "Root of Will: will, intend, purpose, intention",
+    "symbol": "⟨Э⟩"
   },
   {
-    "english_letter": "M",
-    "enochian_name": "Tal",
-    "numeric_value": 8,
-    "meaning": "Root of Knowledge: mind, know, awareness, knowledge"
+    "english_letter": "F",
+    "enochian_name": "Orth",
+    "numeric_value": 5,
+    "meaning": "Root of Manifestation: manifest, show, appear",
+    "symbol": "⟨Φ⟩"
   },
   {
-    "english_letter": "I",
-    "enochian_name": "Gon",
-    "numeric_value": 9,
-    "meaning": "Root of Energy\/Enablement: energize, enable, ability"
+    "english_letter": "G",
+    "enochian_name": "Ged",
+    "numeric_value": 3,
+    "meaning": "Root of Negation: not, none, nothing, nor",
+    "symbol": "⟨Г⟩"
   },
   {
     "english_letter": "H",
     "enochian_name": "Na-hath",
     "numeric_value": 10,
-    "meaning": "Root of Increase: grow, increase, more, faster"
+    "meaning": "Root of Increase: grow, increase, more, faster",
+    "symbol": "⟨Н⟩"
+  },
+  {
+    "english_letter": "I",
+    "enochian_name": "Gon",
+    "numeric_value": 9,
+    "meaning": "Root of Energy/Enablement: energize, enable, ability",
+    "symbol": "⟨I⟩"
+  },
+  {
+    "english_letter": "J",
+    "enochian_name": "Gon",
+    "numeric_value": 9,
+    "meaning": "Root of Energy/Enablement: energize, enable, ability",
+    "symbol": "⟨I⟩"
+  },
+  {
+    "english_letter": "K",
+    "enochian_name": "Veh",
+    "numeric_value": 2,
+    "meaning": "Root of Causation: make, cause, create, because (of)",
+    "symbol": "⟨ↄ⟩"
   },
   {
     "english_letter": "L",
     "enochian_name": "Ur",
     "numeric_value": 20,
-    "meaning": "Root of Breath: breath, life"
+    "meaning": "Root of Breath: breath, life",
+    "symbol": "⟨Л⟩"
   },
   {
-    "english_letter": "P",
-    "enochian_name": "Mals",
-    "numeric_value": 30,
-    "meaning": "Root of Primacy: first, primary, one; providence"
-  },
-  {
-    "english_letter": "Q",
-    "enochian_name": "Ger",
-    "numeric_value": 40,
-    "meaning": "Root of Establishment: space, place, put, set; here, there, where"
+    "english_letter": "M",
+    "enochian_name": "Tal",
+    "numeric_value": 8,
+    "meaning": "Root of Knowledge: mind, know, awareness, knowledge",
+    "symbol": "⟨М⟩"
   },
   {
     "english_letter": "N",
     "enochian_name": "Drun",
     "numeric_value": 50,
-    "meaning": "Root of Desire: desire, love"
-  },
-  {
-    "english_letter": "X",
-    "enochian_name": "Pal",
-    "numeric_value": 60,
-    "meaning": "Root of Interiority: within, inside, self-hood"
+    "meaning": "Root of Desire: desire, love",
+    "symbol": "⟨И⟩"
   },
   {
     "english_letter": "O",
     "enochian_name": "Med",
     "numeric_value": 70,
-    "meaning": "Root of Limitation\/Decrease: limit, lessen, lower, slower"
+    "meaning": "Root of Limitation/Decrease: limit, lessen, lower, slower",
+    "symbol": "⟨О⟩"
+  },
+  {
+    "english_letter": "P",
+    "enochian_name": "Mals",
+    "numeric_value": 30,
+    "meaning": "Root of Primacy: first, primary, one; providence",
+    "symbol": "⟨Π⟩"
+  },
+  {
+    "english_letter": "Q",
+    "enochian_name": "Ger",
+    "numeric_value": 40,
+    "meaning": "Root of Establishment: space, place, put, set; here, there, where",
+    "symbol": "⟨Ψ⟩"
   },
   {
     "english_letter": "R",
     "enochian_name": "Don",
     "numeric_value": 80,
-    "meaning": "Root of Being-Becoming: being, becoming; existence"
-  },
-  {
-    "english_letter": "Z",
-    "enochian_name": "Ceph",
-    "numeric_value": 90,
-    "meaning": "Root of Movement: move, motion, emotion, motivate, change"
-  },
-  {
-    "english_letter": "U",
-    "enochian_name": "Val",
-    "numeric_value": 100,
-    "meaning": "Root of Division: divide, separate, other (than), part(s) of"
-  },
-  {
-    "english_letter": "U",
-    "enochian_name": "Val",
-    "numeric_value": 100,
-    "meaning": "Root of Light: light, enlightenment"
-  },
-  {
-    "english_letter": "V",
-    "enochian_name": "Val",
-    "numeric_value": 100,
-    "meaning": "Root of Darkness: dark, hidden (therefore, unknown); reflection"
+    "meaning": "Root of Being-Becoming: being, becoming; existence",
+    "symbol": "⟨Я⟩"
   },
   {
     "english_letter": "S",
     "enochian_name": "Fam",
     "numeric_value": 200,
-    "meaning": "Root of Possession: have, acquire, gather; together"
+    "meaning": "Root of Possession: have, acquire, gather; together",
+    "symbol": "⟨∑⟩"
   },
   {
     "english_letter": "T",
     "enochian_name": "Gisa",
     "numeric_value": 300,
-    "meaning": "Root of Balance: balance, justice, adjust, judge, equilibrate"
+    "meaning": "Root of Balance: balance, justice, adjust, judge, equilibrate",
+    "symbol": "⟨Т⟩"
+  },
+  {
+    "english_letter": "U",
+    "enochian_name": "Val",
+    "numeric_value": 100,
+    "meaning": "Root of Division: divide, separate, other (than), part(s) of",
+    "symbol": "⟨∪⟩"
+  },
+  {
+    "english_letter": "V",
+    "enochian_name": "Val",
+    "numeric_value": 100,
+    "meaning": "Root of Darkness: dark, hidden (therefore, unknown); reflection",
+    "symbol": "⟨∪⟩"
+  },
+  {
+    "english_letter": "W",
+    "enochian_name": "Val",
+    "numeric_value": 100,
+    "meaning": "Root of Division: divide, separate, other (than), part(s) of",
+    "symbol": "⟨∪⟩"
+  },
+  {
+    "english_letter": "X",
+    "enochian_name": "Pal",
+    "numeric_value": 60,
+    "meaning": "Root of Interiority: within, inside, self-hood",
+    "symbol": "⟨Ж⟩"
+  },
+  {
+    "english_letter": "Y",
+    "enochian_name": "Gon",
+    "numeric_value": 9,
+    "meaning": "Root of Energy/Enablement: energize, enable, ability",
+    "symbol": "⟨I⟩"
+  },
+  {
+    "english_letter": "Z",
+    "enochian_name": "Ceph",
+    "numeric_value": 90,
+    "meaning": "Root of Movement: move, motion, emotion, motivate, change",
+    "symbol": "⟨Ζ⟩"
+  },
+  {
+    "english_letter": " ",
+    "enochian_name": " ",
+    "numeric_value": 0,
+    "meaning": "Space",
+    "symbol": " "
+  },
+  {
+    "english_letter": ".",
+    "enochian_name": ".",
+    "numeric_value": 0,
+    "meaning": "Period",
+    "symbol": "."
+  },
+  {
+    "english_letter": ",",
+    "enochian_name": ",",
+    "numeric_value": 0,
+    "meaning": "Comma",
+    "symbol": ","
+  },
+  {
+    "english_letter": "!",
+    "enochian_name": "!",
+    "numeric_value": 0,
+    "meaning": "Exclamation",
+    "symbol": "!"
+  },
+  {
+    "english_letter": "?",
+    "enochian_name": "?",
+    "numeric_value": 0,
+    "meaning": "Question",
+    "symbol": "?"
+  },
+  {
+    "english_letter": ";",
+    "enochian_name": ";",
+    "numeric_value": 0,
+    "meaning": "Semicolon",
+    "symbol": ";"
+  },
+  {
+    "english_letter": ":",
+    "enochian_name": ":",
+    "numeric_value": 0,
+    "meaning": "Colon",
+    "symbol": ":"
+  },
+  {
+    "english_letter": "-",
+    "enochian_name": "-",
+    "numeric_value": 0,
+    "meaning": "Hyphen",
+    "symbol": "-"
+  },
+  {
+    "english_letter": "(",
+    "enochian_name": "(",
+    "numeric_value": 0,
+    "meaning": "Open Parenthesis",
+    "symbol": "("
+  },
+  {
+    "english_letter": ")",
+    "enochian_name": ")",
+    "numeric_value": 0,
+    "meaning": "Close Parenthesis",
+    "symbol": ")"
   }
 ]

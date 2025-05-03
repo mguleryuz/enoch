@@ -70,7 +70,7 @@ export default function EnochianTranslator() {
   const [phraseMatches, setPhraseMatches] = useState<Record<string, string>>({})
 
   // Use the custom dictionary hook
-  const { translator, loading, error: errorMessage } = useEnochianDictionary()
+  const { data: translator, isLoading, error } = useEnochianDictionary()
 
   // Debounce the input value to avoid excessive translations
   const debouncedInput = useDebounce(input, 500)
@@ -363,19 +363,19 @@ export default function EnochianTranslator() {
     return result
   }
 
-  return loading ? (
+  return isLoading ? (
     <Card className="w-full">
       <CardContent className="flex flex-col justify-center items-center h-64 py-6">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
         <p className="text-muted">Loading Enochian dictionary...</p>
       </CardContent>
     </Card>
-  ) : errorMessage ? (
+  ) : error ? (
     <Card className="w-full border-destructive">
       <CardContent className="pt-6">
         <div className="flex items-center gap-3 text-destructive">
           <AlertCircle size={20} />
-          <p>{errorMessage}</p>
+          <p>{error.toString()}</p>
         </div>
       </CardContent>
     </Card>

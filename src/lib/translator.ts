@@ -63,8 +63,8 @@ export const fetchRootData = async (): Promise<Array<EnochianRoot>> => {
 
 export { Translator as EnochianTranslator }
 export class Translator {
-  private lexiconData: Array<EnochianWord> = []
-  private rootData: Array<EnochianRoot> = []
+  public lexiconData: Array<EnochianWord> = []
+  public rootData: Array<EnochianRoot> = []
   private enochianLetterMap: Record<string, { name: string; symbol: string }> =
     {}
   private meaningToWordMap = new Map<string, string>()
@@ -799,7 +799,7 @@ export class Translator {
       }
     }
 
-    // For short words, map directly using the first letters
+    // For short words (3 letters or less), map directly using all letters
     if (word.length <= 3) {
       const letters = Array.from(word.toLowerCase())
       const constructedWord = letters
@@ -824,15 +824,15 @@ export class Translator {
       }
     }
 
-    // For longer words, use significant roots
+    // For longer words, use all significant roots
     const significantRoots = Array.from(word.toLowerCase())
       .filter((char) => /[a-z]/i.test(char))
       .map((letter) => this.findRootForLetter(letter))
       .filter(Boolean)
 
     if (significantRoots.length > 0) {
-      // Take first 3 significant roots
-      const usedRoots = significantRoots.slice(0, 3)
+      // Use all significant roots instead of limiting to the first 3
+      const usedRoots = significantRoots
       const constructedWord = usedRoots
         .map((root) => root?.enochian_name.charAt(0).toLowerCase())
         .join('')
@@ -843,7 +843,7 @@ export class Translator {
 
       return {
         word: finalWord,
-        explanation: `Constructed from key letter roots: ${usedRoots
+        explanation: `Constructed from all letter roots: ${usedRoots
           .map(
             (root) =>
               `${root?.english_letter} (${root?.meaning.split(':')[0].trim()})`,

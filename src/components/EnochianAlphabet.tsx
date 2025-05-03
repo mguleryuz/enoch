@@ -14,11 +14,11 @@ export default function EnochianAlphabet() {
     null,
   )
 
-  const { rootData, loading: isLoading, error } = useEnochianDictionary()
+  const { data, isLoading, error } = useEnochianDictionary()
 
-  const enochianLetters = rootData.filter((letter) =>
-    letter.english_letter.match(/^[A-Z]$/),
-  )
+  const enochianLetters =
+    data?.rootData.filter((letter) => letter.english_letter.match(/^[A-Z]$/)) ??
+    []
 
   if (isLoading) {
     return (

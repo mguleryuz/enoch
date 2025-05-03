@@ -69,7 +69,6 @@ export default function EnochianTranslator() {
   >({})
   const [selectedWord, setSelectedWord] = useState<string | null>(null)
   const [phraseMatches, setPhraseMatches] = useState<Record<string, string>>({})
-  const [symbolsExpanded, setSymbolsExpanded] = useState(false)
 
   // Use the custom dictionary hook
   const { data: translator, isLoading, error } = useEnochianDictionary()

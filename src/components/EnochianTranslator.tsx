@@ -14,51 +14,13 @@ import {
 } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { EnhancedEnochianTranslator } from '@/lib/enhanced-translator'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-
-interface EnochianWord {
-  word: string
-  meaning: string
-}
-
-interface EnochianRoot {
-  english_letter: string
-  enochian_name: string
-  numeric_value: number
-  meaning: string
-  symbol: string
-}
-
-// Function to fetch Enochian lexicon data
-const fetchLexiconData = async (): Promise<Array<EnochianWord>> => {
-  const response = await fetch('/enochian_lexicon.json')
-  if (!response.ok) {
-    throw new Error('Failed to fetch lexicon data')
-  }
-  return response.json()
-}
-
-// Function to fetch Enochian root table data
-const fetchRootData = async (): Promise<Array<EnochianRoot>> => {
-  const response = await fetch('/enochian_root_table.json')
-  if (!response.ok) {
-    throw new Error('Failed to fetch root table data')
-  }
-  return response.json()
-}
+import { Translator, fetchLexiconData, fetchRootData } from '@/lib/translator'
 
 export default function EnochianTranslator() {
   const [input, setInput] = useState('')
   const [translationResult, setTranslationResult] = useState<string>('')
   const [phoneticResult, setPhoneticResult] = useState<string>('')
   const [symbolResult, setSymbolResult] = useState<string>('')
-  const [enhancedResult, setEnhancedResult] = useState<string>('')
   const [showDetails, setShowDetails] = useState(false)
   const [rootDetailsView, setRootDetailsView] = useState(false)
   const [matchCounts, setMatchCounts] = useState<{
@@ -68,22 +30,14 @@ export default function EnochianTranslator() {
     total: number
   }>({ direct: 0, partial: 0, missing: 0, total: 0 })
   const [displayMode, setDisplayMode] = useState<
-    'original' | 'phonetic' | 'symbol' | 'enhanced'
-  >('enhanced')
+    'original' | 'phonetic' | 'symbol'
+  >('original')
   const [wordToAnalyze, setWordToAnalyze] = useState('')
   const [wordAnalysis, setWordAnalysis] = useState<
     Record<string, Array<{ letter: string; root?: any }>>
   >({})
   const [currentAnalysis, setCurrentAnalysis] = useState<
     Array<{ letter: string; root?: any }>
-  >([])
-  const [meaningAnalysis, setMeaningAnalysis] = useState<
-    Array<{
-      english: string
-      enochian: string
-      source: 'lexicon' | 'root-analysis' | 'special-case'
-      details?: string
-    }>
   >([])
 
   // Using React Query to fetch lexicon data
@@ -114,7 +68,7 @@ export default function EnochianTranslator() {
   } = useQuery({
     queryKey: ['enochianTranslator'],
     queryFn: async () => {
-      return new EnhancedEnochianTranslator(lexiconData, rootData)
+      return new Translator(lexiconData, rootData)
     },
     enabled: !!lexiconData.length && !!rootData.length,
   })
@@ -141,25 +95,21 @@ export default function EnochianTranslator() {
   const handleTranslate = () => {
     if (!translator || !input.trim()) return
 
-    // Use the enhanced translator
-    const result = translator.translateEnhanced(input)
+    // Use the base translator
+    const result = translator.translateComplete(input)
 
     setTranslationResult(result.translationText)
     setPhoneticResult(result.phoneticText)
     setSymbolResult(result.symbolText)
-    setEnhancedResult(result.rootBasedTranslation)
     setMatchCounts(result.stats)
     setWordAnalysis(result.wordAnalysis)
-    setMeaningAnalysis(result.meaningAnalysis)
 
     // Get first word for analysis if available
     const firstEnochianWord = getFirstWordForAnalysis(result.translationText)
     setWordToAnalyze(firstEnochianWord)
   }
 
-  const handleCopy = (
-    type: 'original' | 'phonetic' | 'symbol' | 'enhanced',
-  ) => {
+  const handleCopy = (type: 'original' | 'phonetic' | 'symbol') => {
     let textToCopy = ''
     switch (type) {
       case 'original':
@@ -170,9 +120,6 @@ export default function EnochianTranslator() {
         break
       case 'symbol':
         textToCopy = symbolResult
-        break
-      case 'enhanced':
-        textToCopy = enhancedResult
         break
     }
 
@@ -232,48 +179,6 @@ export default function EnochianTranslator() {
                 <p className="text-sm text-muted italic">
                   No root information available
                 </p>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  // Render word-by-word meaning analysis
-  const renderMeaningAnalysis = () => {
-    if (meaningAnalysis.length === 0) {
-      return (
-        <p className="text-sm text-muted italic">
-          Translate a phrase first to see word-by-word analysis
-        </p>
-      )
-    }
-
-    return (
-      <div className="space-y-3">
-        <h4 className="text-sm font-medium mb-2">Word-by-Word Analysis:</h4>
-        <div className="grid gap-2">
-          {meaningAnalysis.map((analysis, idx) => (
-            <div
-              key={idx}
-              className="border-b border-border/30 pb-2 last:border-0 last:pb-0"
-            >
-              <div className="flex items-center gap-2">
-                <p className="font-medium">
-                  <span className="text-muted">{analysis.english}</span> →{' '}
-                  <span className="font-bold">{analysis.enochian}</span>
-                </p>
-                <Badge variant="outline" className="ml-1">
-                  {analysis.source === 'lexicon'
-                    ? 'Dictionary'
-                    : analysis.source === 'special-case'
-                      ? 'Special Case'
-                      : 'Root Analysis'}
-                </Badge>
-              </div>
-              {analysis.details && (
-                <p className="text-xs text-muted mt-1">{analysis.details}</p>
               )}
             </div>
           ))}
@@ -363,34 +268,16 @@ export default function EnochianTranslator() {
               <Tabs
                 value={displayMode}
                 onValueChange={(value) =>
-                  setDisplayMode(
-                    value as 'original' | 'phonetic' | 'symbol' | 'enhanced',
-                  )
+                  setDisplayMode(value as 'original' | 'phonetic' | 'symbol')
                 }
                 className="w-auto"
               >
-                <TabsList className="grid grid-cols-4 h-9">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <TabsTrigger value="enhanced" className="px-3">
-                          Enhanced
-                        </TabsTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">
-                          Enhanced translation uses both dictionary matches and
-                          letter-by-letter root analysis for words not found in
-                          the lexicon
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TabsTrigger value="phonetic" className="px-3">
-                    Phonetic
-                  </TabsTrigger>
+                <TabsList className="grid grid-cols-3 h-9">
                   <TabsTrigger value="original" className="px-3">
                     Words
+                  </TabsTrigger>
+                  <TabsTrigger value="phonetic" className="px-3">
+                    Phonetic
                   </TabsTrigger>
                   <TabsTrigger value="symbol" className="px-3">
                     Symbols
@@ -403,9 +290,7 @@ export default function EnochianTranslator() {
                 ? 'Enochian words translated from English'
                 : displayMode === 'phonetic'
                   ? 'Phonetic pronunciation using Enochian letter names'
-                  : displayMode === 'symbol'
-                    ? 'Visual representation using Enochian symbols'
-                    : 'Enhanced translation using both dictionary and root analysis'}
+                  : 'Visual representation using Enochian symbols'}
             </CardDescription>
           </CardHeader>
 
@@ -417,7 +302,6 @@ export default function EnochianTranslator() {
                 {displayMode === 'symbol' && (
                   <span className="text-xl tracking-wide">{symbolResult}</span>
                 )}
-                {displayMode === 'enhanced' && enhancedResult}
               </div>
               <Button
                 size="icon"
@@ -476,8 +360,7 @@ export default function EnochianTranslator() {
                   </Badge>
                 </div>
                 <p className="text-xs text-muted mt-3">
-                  Words in [brackets] have no direct Enochian equivalent. In
-                  enhanced mode, these show root-based translations.
+                  Words in [brackets] have no direct Enochian equivalent.
                 </p>
               </div>
             )}
@@ -505,9 +388,7 @@ export default function EnochianTranslator() {
                 onClick={() => setShowDetails(!showDetails)}
               >
                 <Info className="h-4 w-4" />
-                <span>
-                  {showDetails ? 'Hide Word Analysis' : 'Show Word Analysis'}
-                </span>
+                <span>{showDetails ? 'Hide Details' : 'Show Details'}</span>
               </Button>
             </div>
 
@@ -518,14 +399,6 @@ export default function EnochianTranslator() {
                 </h4>
                 <div className="bg-accent/30 rounded-md p-4 border">
                   {renderRootAnalysis()}
-                </div>
-              </div>
-            )}
-
-            {showDetails && (
-              <div className="w-full mt-3 border-t pt-3">
-                <div className="bg-accent/30 rounded-md p-4 border">
-                  {renderMeaningAnalysis()}
                 </div>
               </div>
             )}

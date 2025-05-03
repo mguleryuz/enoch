@@ -48,7 +48,7 @@ export const fetchRootData = async (): Promise<Array<EnochianRoot>> => {
   return response.json()
 }
 
-export class EnochianTranslator {
+export class Translator {
   private lexiconData: Array<EnochianWord> = []
   private rootData: Array<EnochianRoot> = []
   private enochianLetterMap: Record<string, { name: string; symbol: string }> =

@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Translator, fetchLexiconData, fetchRootData } from '@/lib/translator'
 import {
@@ -27,8 +26,8 @@ export default function EnochianTranslator() {
   const [translationResult, setTranslationResult] = useState<string>('')
   const [phoneticResult, setPhoneticResult] = useState<string>('')
   const [symbolResult, setSymbolResult] = useState<string>('')
-  const [showDetails, setShowDetails] = useState(false)
-  const [rootDetailsView, setRootDetailsView] = useState(false)
+  const [showDetails, setShowDetails] = useState(true)
+  const [rootDetailsView, setRootDetailsView] = useState(true)
   const [matchCounts, setMatchCounts] = useState<{
     direct: number
     partial: number
@@ -36,9 +35,6 @@ export default function EnochianTranslator() {
     constructed: number
     total: number
   }>({ direct: 0, partial: 0, missing: 0, constructed: 0, total: 0 })
-  const [displayMode, setDisplayMode] = useState<
-    'original' | 'phonetic' | 'symbol'
-  >('phonetic')
   const [wordToAnalyze, setWordToAnalyze] = useState('')
   const [wordAnalysis, setWordAnalysis] = useState<
     Record<string, Array<{ letter: string; root?: any }>>
@@ -132,22 +128,9 @@ export default function EnochianTranslator() {
     setSelectedWord(null)
   }
 
-  const handleCopy = (type: 'original' | 'phonetic' | 'symbol') => {
-    let textToCopy = ''
-    switch (type) {
-      case 'phonetic':
-        textToCopy = phoneticResult
-        break
-      case 'original':
-        textToCopy = translationResult
-        break
-      case 'symbol':
-        textToCopy = symbolResult
-        break
-    }
-
-    if (textToCopy) {
-      navigator.clipboard.writeText(textToCopy)
+  const handleCopy = (text: string) => {
+    if (text) {
+      navigator.clipboard.writeText(text)
       toast.success('Copied to clipboard', {
         description: 'The translation text has been copied to your clipboard',
       })
@@ -411,13 +394,6 @@ export default function EnochianTranslator() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowDetails(!showDetails)}
-                >
-                  {showDetails ? 'Hide Details' : 'Show Details'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
                   onClick={() => setInput('')}
                   disabled={!input}
                 >
@@ -435,71 +411,76 @@ export default function EnochianTranslator() {
       {translationResult.length > 0 && (
         <Card className="border-primary/20">
           <CardHeader className="pb-3">
-            <div className="flex justify-between items-center flex-wrap gap-3">
-              <CardTitle>Enochian Translation</CardTitle>
-              <Tabs
-                value={displayMode}
-                onValueChange={(value) =>
-                  setDisplayMode(value as 'original' | 'phonetic' | 'symbol')
-                }
-                className="w-auto"
-              >
-                <TabsList className="grid grid-cols-3 h-9">
-                  <TabsTrigger value="phonetic" className="px-3">
-                    Phonetic
-                  </TabsTrigger>
-                  <TabsTrigger value="original" className="px-3">
-                    Words
-                  </TabsTrigger>
-                  <TabsTrigger value="symbol" className="px-3">
-                    Symbols
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
+            <CardTitle>Enochian Translation</CardTitle>
             <CardDescription>
-              {displayMode === 'original'
-                ? 'Enochian words translated from English'
-                : displayMode === 'phonetic'
-                  ? 'Phonetic pronunciation using Enochian letter names'
-                  : 'Visual representation using Enochian symbols'}
+              View translation in all display modes: words, phonetic, and
+              symbols
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            <div className="relative">
-              {displayMode === 'original' ? (
-                <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
-                  {renderAnnotatedTranslation()}
+            <div className="space-y-6">
+              {/* Words Display */}
+              <div>
+                <h3 className="text-sm font-medium mb-2">Words:</h3>
+                <div className="relative">
+                  <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
+                    {renderAnnotatedTranslation()}
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
+                    onClick={() => handleCopy(translationResult)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
-              ) : (
-                <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
-                  {displayMode === 'phonetic' && (
-                    <div>
-                      {/* Check if the entire input is a phrase match */}
-                      {Object.keys(phraseMatches).some(
-                        (phrase) =>
-                          phrase.toLowerCase() === input.trim().toLowerCase(),
-                      ) ? (
-                        // Display the matched phrase as-is for phonetic mode
-                        <span className="font-medium">
-                          {
-                            phraseMatches[
-                              Object.keys(phraseMatches).find(
-                                (phrase) =>
-                                  phrase.toLowerCase() ===
-                                  input.trim().toLowerCase(),
-                              ) || ''
-                            ]
-                          }
-                        </span>
-                      ) : (
-                        // Normal phonetic display
-                        <span>{phoneticResult}</span>
-                      )}
-                    </div>
-                  )}
-                  {displayMode === 'symbol' && (
+              </div>
+
+              {/* Phonetic Display */}
+              <div>
+                <h3 className="text-sm font-medium mb-2">Phonetic:</h3>
+                <div className="relative">
+                  <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
+                    {/* Check if the entire input is a phrase match */}
+                    {Object.keys(phraseMatches).some(
+                      (phrase) =>
+                        phrase.toLowerCase() === input.trim().toLowerCase(),
+                    ) ? (
+                      // Display the matched phrase as-is for phonetic mode
+                      <span className="font-medium">
+                        {
+                          phraseMatches[
+                            Object.keys(phraseMatches).find(
+                              (phrase) =>
+                                phrase.toLowerCase() ===
+                                input.trim().toLowerCase(),
+                            ) || ''
+                          ]
+                        }
+                      </span>
+                    ) : (
+                      // Normal phonetic display
+                      <span>{phoneticResult}</span>
+                    )}
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
+                    onClick={() => handleCopy(phoneticResult)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Symbol Display */}
+              <div>
+                <h3 className="text-sm font-medium mb-2">Symbols:</h3>
+                <div className="relative">
+                  <div className="bg-accent/30 rounded-md p-4 border min-h-28 whitespace-pre-wrap text-lg">
                     <span className="text-xl tracking-wide">
                       {/* Check if the entire input is a phrase match */}
                       {Object.keys(phraseMatches).some(
@@ -523,21 +504,19 @@ export default function EnochianTranslator() {
                         <span>{symbolResult}</span>
                       )}
                     </span>
-                  )}
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
+                    onClick={() => handleCopy(symbolResult)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
+              </div>
 
-              <Button
-                size="icon"
-                variant="outline"
-                className="absolute top-3 right-3 h-8 w-8 bg-background/80 hover:bg-background"
-                onClick={() => handleCopy(displayMode)}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {showDetails && (
+              {/* Translation Details */}
               <div className="mt-5 pt-4 border-t">
                 <div className="text-sm font-medium mb-3">
                   Translation Statistics:
@@ -623,36 +602,8 @@ export default function EnochianTranslator() {
                   </p>
                 </div>
               </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col items-start pt-0">
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => setRootDetailsView(!rootDetailsView)}
-              >
-                <BookOpen className="h-4 w-4" />
-                <span>
-                  {rootDetailsView
-                    ? 'Hide Root Analysis'
-                    : 'Show Root Analysis'}
-                </span>
-              </Button>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => setShowDetails(!showDetails)}
-              >
-                <Info className="h-4 w-4" />
-                <span>{showDetails ? 'Hide Details' : 'Show Details'}</span>
-              </Button>
-            </div>
-
-            {rootDetailsView && (
+              {/* Root Analysis */}
               <div className="w-full mt-3 border-t pt-3">
                 <h4 className="text-sm font-medium mb-2">
                   Enochian Root Analysis:
@@ -661,8 +612,8 @@ export default function EnochianTranslator() {
                   {renderRootAnalysis()}
                 </div>
               </div>
-            )}
-          </CardFooter>
+            </div>
+          </CardContent>
         </Card>
       )}
     </div>

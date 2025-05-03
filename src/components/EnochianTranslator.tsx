@@ -104,7 +104,7 @@ export default function EnochianTranslator() {
   // Using React Query to fetch lexicon data
   const {
     data: lexiconData = [],
-    isLoading: isLexiconLoading,
+    isLoading: lexiconLoading,
     error: lexiconError,
   } = useQuery({
     queryKey: ['enochianLexicon'],
@@ -114,7 +114,7 @@ export default function EnochianTranslator() {
   // Using React Query to fetch root table data
   const {
     data: rootData = [],
-    isLoading: isRootLoading,
+    isLoading: rootLoading,
     error: rootError,
   } = useQuery({
     queryKey: ['enochianRoots'],
@@ -127,8 +127,8 @@ export default function EnochianTranslator() {
       ? `Error loading Enochian data: ${(lexiconError || rootError)?.toString()}`
       : undefined
 
-  // Check if any data is still loading
-  const isLoading = isLexiconLoading || isRootLoading
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const loading = lexiconLoading || rootLoading
 
   // Convert Enochian word to phonetic representation using letter names
   const convertToPhonetic = (word: string): string => {
@@ -319,31 +319,24 @@ export default function EnochianTranslator() {
     return firstWord && !firstWord.match(/^\[.*\]$/) ? firstWord : ''
   }
 
-  if (isLoading) {
-    return (
-      <Card className="w-full">
-        <CardContent className="flex flex-col justify-center items-center h-64 py-6">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-          <p className="text-muted">Loading Enochian dictionary...</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (errorMessage) {
-    return (
-      <Card className="w-full border-destructive">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 text-destructive">
-            <AlertCircle size={20} />
-            <p>{errorMessage}</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  return loading ? (
+    <Card className="w-full">
+      <CardContent className="flex flex-col justify-center items-center h-64 py-6">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+        <p className="text-muted">Loading Enochian dictionary...</p>
+      </CardContent>
+    </Card>
+  ) : errorMessage ? (
+    <Card className="w-full border-destructive">
+      <CardContent className="pt-6">
+        <div className="flex items-center gap-3 text-destructive">
+          <AlertCircle size={20} />
+          <p>{errorMessage}</p>
+        </div>
+      </CardContent>
+    </Card>
+  ) : (
     <div className="space-y-6">
       <Card>
         <CardHeader className="pb-3">

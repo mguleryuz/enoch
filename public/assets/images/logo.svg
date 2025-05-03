@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main circle -->
+  <circle cx="256" cy="256" r="248" fill="#0f1215" stroke="#f5cf2a" stroke-width="4"/>
+  
+  <!-- Enochian letter-inspired elements -->
+  <g fill="#f5cf2a">
+    <!-- Central symbol inspired by Enochian letters -->
+    <path d="M256 110 L346 210 L256 310 L166 210 Z" />
+    
+    <!-- Ring of symbols -->
+    <circle cx="256" cy="110" r="15" />
+    <circle cx="346" cy="210" r="15" />
+    <circle cx="256" cy="310" r="15" />
+    <circle cx="166" cy="210" r="15" />
+    
+    <!-- Additional decorative elements -->
+    <path d="M256 325 L256 390" stroke-width="6" stroke="#f5cf2a" fill="none" />
+    <path d="M226 355 L286 355" stroke-width="6" stroke="#f5cf2a" fill="none" />
+    
+    <!-- Decorative arcs -->
+    <path d="M160 150 A150 150 0 0 1 352 150" stroke-width="3" stroke="#f5cf2a" fill="none" />
+    <path d="M160 360 A150 150 0 0 0 352 360" stroke-width="3" stroke="#f5cf2a" fill="none" />
+  </g>
+</svg> 

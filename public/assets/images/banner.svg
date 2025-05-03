@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f1215"/>
+  
+  <!-- Decorative elements -->
+  <g opacity="0.1">
+    <circle cx="600" cy="315" r="200" stroke="#f5cf2a" stroke-width="2" fill="none"/>
+    <circle cx="600" cy="315" r="300" stroke="#f5cf2a" stroke-width="2" fill="none"/>
+    <circle cx="600" cy="315" r="400" stroke="#f5cf2a" stroke-width="2" fill="none"/>
+    
+    <!-- Enochian-inspired symbols scattered throughout -->
+    <path d="M300 200 L350 250 L300 300 L250 250 Z" fill="#f5cf2a" opacity="0.2"/>
+    <path d="M900 200 L950 250 L900 300 L850 250 Z" fill="#f5cf2a" opacity="0.2"/>
+    <path d="M300 450 L350 500 L300 550 L250 500 Z" fill="#f5cf2a" opacity="0.2"/>
+    <path d="M900 450 L950 500 L900 550 L850 500 Z" fill="#f5cf2a" opacity="0.2"/>
+  </g>
+  
+  <!-- Logo at center -->
+  <g transform="translate(544, 215)">
+    <!-- Main circle -->
+    <circle cx="56" cy="56" r="54" fill="#0f1215" stroke="#f5cf2a" stroke-width="2"/>
+    
+    <!-- Enochian letter-inspired elements -->
+    <g fill="#f5cf2a">
+      <!-- Central symbol inspired by Enochian letters -->
+      <path d="M56 24 L76 46 L56 68 L36 46 Z" />
+      
+      <!-- Ring of symbols -->
+      <circle cx="56" cy="24" r="3" />
+      <circle cx="76" cy="46" r="3" />
+      <circle cx="56" cy="68" r="3" />
+      <circle cx="36" cy="46" r="3" />
+      
+      <!-- Additional decorative elements -->
+      <path d="M56 71 L56 85" stroke-width="2" stroke="#f5cf2a" fill="none" />
+      <path d="M49 78 L63 78" stroke-width="2" stroke="#f5cf2a" fill="none" />
+    </g>
+  </g>
+  
+  <!-- Text -->
+  <text x="600" y="380" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="#f5cf2a" text-anchor="middle">ENOCH</text>
+  <text x="600" y="440" font-family="Arial, sans-serif" font-size="24" fill="#ffffff" text-anchor="middle">ENOCHIAN LANGUAGE TRANSLATOR</text>
+</svg> 

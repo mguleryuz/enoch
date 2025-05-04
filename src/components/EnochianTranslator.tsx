@@ -27,65 +27,40 @@ import {
 import { useEnochianDictionary } from '@/hooks/useEnochianDictionary'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
-
-// Debounce utility function
-const useDebounce = <T,>(value: T, delay: number): T => {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
+import { useTranslatorStore } from '@/store/translatorStore'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export default function EnochianTranslator() {
-  const [input, setInput] = useState('')
-  const [translationResult, setTranslationResult] = useState<string>('')
-  const [phoneticResult, setPhoneticResult] = useState<string>('')
-  const [symbolResult, setSymbolResult] = useState<string>('')
-  const [matchCounts, setMatchCounts] = useState<{
-    direct: number
-    partial: number
-    missing: number
-    constructed: number
-    total: number
-  }>({ direct: 0, partial: 0, missing: 0, constructed: 0, total: 0 })
-  const [wordToAnalyze, setWordToAnalyze] = useState('')
-  const [wordAnalysis, setWordAnalysis] = useState<
-    Record<string, Array<{ letter: string; root?: any }>>
-  >({})
-  const [currentAnalysis, setCurrentAnalysis] = useState<
-    Array<{ letter: string; root?: any }>
-  >([])
-  const [constructionDetails, setConstructionDetails] = useState<
-    Record<
-      string,
-      {
-        original: string
-        result: string
-        method: 'direct' | 'partial' | 'constructed' | 'missing'
-        explanation: string
-      }
-    >
-  >({})
-  const [selectedWord, setSelectedWord] = useState<string | null>(null)
-  const [phraseMatches, setPhraseMatches] = useState<Record<string, string>>({})
-
-  // New state for mobile dialogs
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [dialogContent, setDialogContent] = useState<{
-    word: string
-    result: string
-    method: string
-    explanation: string
-  }>({ word: '', result: '', method: '', explanation: '' })
+  // Use Zustand store instead of useState hooks
+  const {
+    input,
+    translationResult,
+    phoneticResult,
+    symbolResult,
+    matchCounts,
+    wordToAnalyze,
+    wordAnalysis,
+    currentAnalysis,
+    constructionDetails,
+    selectedWord,
+    phraseMatches,
+    dialogOpen,
+    dialogContent,
+    setInput,
+    setTranslationResult,
+    setPhoneticResult,
+    setSymbolResult,
+    setMatchCounts,
+    setWordToAnalyze,
+    setWordAnalysis,
+    setCurrentAnalysis,
+    setConstructionDetails,
+    setSelectedWord,
+    setPhraseMatches,
+    setDialogOpen,
+    setDialogContent,
+    resetState,
+  } = useTranslatorStore()
 
   // Media query hook to detect mobile
   const isMobile = useMediaQuery('(max-width: 768px)')
@@ -102,7 +77,7 @@ export default function EnochianTranslator() {
     const analysis = wordToAnalyze ? wordAnalysis[wordToAnalyze] || [] : []
 
     setCurrentAnalysis(analysis)
-  }, [wordToAnalyze, wordAnalysis])
+  }, [wordToAnalyze, wordAnalysis, setCurrentAnalysis])
 
   // Auto-translate effect using debounced input
   useEffect(() => {
@@ -110,21 +85,7 @@ export default function EnochianTranslator() {
 
     if (!debouncedInput.trim()) {
       // Reset results if input is empty
-      setTranslationResult('')
-      setPhoneticResult('')
-      setSymbolResult('')
-      setMatchCounts({
-        direct: 0,
-        partial: 0,
-        missing: 0,
-        constructed: 0,
-        total: 0,
-      })
-      setWordAnalysis({})
-      setConstructionDetails({})
-      setPhraseMatches({})
-      setWordToAnalyze('')
-      setSelectedWord(null)
+      resetState()
       return
     }
 
@@ -146,7 +107,20 @@ export default function EnochianTranslator() {
     // Set the first word as selected by default
     const firstInputWord = debouncedInput.trim().split(/\s+/)[0]
     setSelectedWord(firstInputWord)
-  }, [debouncedInput, translator])
+  }, [
+    debouncedInput,
+    translator,
+    setTranslationResult,
+    setPhoneticResult,
+    setSymbolResult,
+    setMatchCounts,
+    setWordAnalysis,
+    setConstructionDetails,
+    setPhraseMatches,
+    setWordToAnalyze,
+    setSelectedWord,
+    resetState,
+  ])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
@@ -174,7 +148,19 @@ export default function EnochianTranslator() {
     // Set the first word as selected by default
     const firstInputWord = input.trim().split(/\s+/)[0]
     setSelectedWord(firstInputWord)
-  }, [input, translator])
+  }, [
+    input,
+    translator,
+    setTranslationResult,
+    setPhoneticResult,
+    setSymbolResult,
+    setMatchCounts,
+    setWordAnalysis,
+    setConstructionDetails,
+    setPhraseMatches,
+    setWordToAnalyze,
+    setSelectedWord,
+  ])
 
   const handleCopy = (text: string) => {
     if (text) {

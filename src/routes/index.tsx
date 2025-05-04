@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { ChevronDown, Info, X } from 'lucide-react'
+import { ChevronDown, Info } from 'lucide-react'
 import EnochianAlphabet from '../components/EnochianAlphabet'
 import EnochianTranslator from '../components/EnochianTranslator'
 import { Button } from '@/components/ui/button'
@@ -25,22 +24,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useIndexStore } from '@/store/indexStore'
 
 export const Route = createFileRoute('/')({
   component: Index,
 })
 
 function Index() {
-  const [showInfo, setShowInfo] = useState(true)
-  const [dialogInfo, setDialogInfo] = useState<{
-    title: string
-    content: string
-    isOpen: boolean
-  }>({
-    title: '',
-    content: '',
-    isOpen: false,
-  })
+  const { showInfo, dialogInfo, setShowInfo, setDialogInfo } = useIndexStore()
 
   // Media query for mobile detection
   const isMobile = useMediaQuery('(max-width: 768px)')
@@ -241,9 +232,7 @@ function Index() {
       {/* Mobile dialog for info tooltips */}
       <Dialog
         open={dialogInfo.isOpen}
-        onOpenChange={(open) =>
-          setDialogInfo((prev) => ({ ...prev, isOpen: open }))
-        }
+        onOpenChange={(open) => setDialogInfo({ ...dialogInfo, isOpen: open })}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

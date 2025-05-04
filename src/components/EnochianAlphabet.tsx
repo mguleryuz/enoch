@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -8,11 +7,10 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useEnochianDictionary } from '@/hooks/useEnochianDictionary'
+import { useAlphabetStore } from '@/store/alphabetStore'
 
 export default function EnochianAlphabet() {
-  const [activeLetterIndex, setActiveLetterIndex] = useState<number | null>(
-    null,
-  )
+  const { activeLetterIndex, setActiveLetterIndex } = useAlphabetStore()
 
   const { data, isLoading, error } = useEnochianDictionary()
 
@@ -45,40 +43,6 @@ export default function EnochianAlphabet() {
 
   return (
     <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>The 21 Enochian Letters</CardTitle>
-          <CardDescription>
-            Click on a letter to see its meaning and pronunciation
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 gap-3">
-            {enochianLetters.map((letter, index) => (
-              <Button
-                key={letter.english_letter}
-                variant={activeLetterIndex === index ? 'default' : 'outline'}
-                className={`h-auto py-4 px-2 flex flex-col items-center transition-all ${
-                  activeLetterIndex === index
-                    ? 'ring-2 ring-primary/50 shadow-md'
-                    : 'hover:bg-primary/5'
-                }`}
-                onClick={() =>
-                  setActiveLetterIndex(
-                    activeLetterIndex === index ? null : index,
-                  )
-                }
-              >
-                <div className="text-2xl font-bold mb-1">{letter.symbol}</div>
-                <div className="text-sm">{letter.english_letter}</div>
-                <div className="text-xs mt-1">{letter.enochian_name}</div>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {activeLetterIndex !== null && (
         <Card className="border-primary/20">
           <CardContent className="p-6">
@@ -123,6 +87,40 @@ export default function EnochianAlphabet() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>The 21 Enochian Letters</CardTitle>
+          <CardDescription>
+            Click on a letter to see its meaning and pronunciation
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 gap-3">
+            {enochianLetters.map((letter, index) => (
+              <Button
+                key={letter.english_letter}
+                variant={activeLetterIndex === index ? 'default' : 'outline'}
+                className={`h-auto py-4 px-2 flex flex-col items-center transition-all ${
+                  activeLetterIndex === index
+                    ? 'ring-2 ring-primary/50 shadow-md'
+                    : 'hover:bg-primary/5'
+                }`}
+                onClick={() =>
+                  setActiveLetterIndex(
+                    activeLetterIndex === index ? null : index,
+                  )
+                }
+              >
+                <div className="text-2xl font-bold mb-1">{letter.symbol}</div>
+                <div className="text-sm">{letter.english_letter}</div>
+                <div className="text-xs mt-1">{letter.enochian_name}</div>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

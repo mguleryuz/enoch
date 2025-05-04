@@ -31,7 +31,14 @@ export const Route = createFileRoute('/')({
 })
 
 function Index() {
-  const { showInfo, dialogInfo, setShowInfo, setDialogInfo } = useIndexStore()
+  const {
+    showInfo,
+    dialogInfo,
+    activeTab,
+    setShowInfo,
+    setDialogInfo,
+    setActiveTab,
+  } = useIndexStore()
 
   // Media query for mobile detection
   const isMobile = useMediaQuery('(max-width: 768px)')
@@ -193,7 +200,12 @@ function Index() {
           )}
         </Card>
 
-        <Tabs responsive defaultValue="translator" className="mx-auto mb-10">
+        <Tabs
+          responsive
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mx-auto mb-10"
+        >
           <TabsList className="w-full grid grid-cols-2 mb-6 p-1">
             <TabsTrigger value="translator" className="py-3 text-base">
               <Info className="mr-2 h-4 w-4" />

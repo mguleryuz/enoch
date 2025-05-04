@@ -10,8 +10,10 @@ interface DialogInfo {
 interface IndexState {
   showInfo: boolean
   dialogInfo: DialogInfo
+  activeTab: string
   setShowInfo: (show: boolean) => void
   setDialogInfo: (info: DialogInfo) => void
+  setActiveTab: (tab: string) => void
 }
 
 export const useIndexStore = create<IndexState>()(
@@ -23,8 +25,10 @@ export const useIndexStore = create<IndexState>()(
         content: '',
         isOpen: false,
       },
+      activeTab: 'translator',
       setShowInfo: (showInfo) => set({ showInfo }),
       setDialogInfo: (dialogInfo) => set({ dialogInfo }),
+      setActiveTab: (activeTab) => set({ activeTab }),
     }),
     {
       name: 'enochian-index-storage', // unique name for localStorage key

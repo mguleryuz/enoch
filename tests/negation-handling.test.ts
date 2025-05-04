@@ -154,4 +154,33 @@ describe('Negation Handling Tests', () => {
       }
     })
   })
+
+  describe('Root Analysis for Negation', () => {
+    it('should properly analyze roots for negated words', () => {
+      // Translate a word with negation
+      const result = translator.translate('immortal')
+
+      // The result should contain a G- prefixed word
+      expect(result.translationText).toContain('G-')
+
+      // Extract the G-prefixed word
+      const negatedWord = result.translationText
+
+      // Check if word analysis exists for the negated word
+      expect(result.wordAnalysis).toHaveProperty(negatedWord)
+
+      // Get the actual analysis
+      const analysis = result.wordAnalysis[negatedWord]
+
+      // The first item should be the 'g' for negation
+      expect(analysis[0].letter).toBe('g')
+      expect(analysis[0].root).toBeDefined()
+
+      // The second item should be the first letter of the base word (not the hyphen)
+      expect(analysis[1].letter).not.toBe('-')
+
+      // There should be more items after the G (the base word)
+      expect(analysis.length).toBeGreaterThan(1)
+    })
+  })
 })

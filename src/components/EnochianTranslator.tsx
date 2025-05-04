@@ -177,6 +177,13 @@ export default function EnochianTranslator() {
     const firstWord = text.split(' ')[0]
     // Only return the word if it's a valid Enochian word (not marked with brackets)
     const isValidWord = firstWord && !firstWord.match(/^\[.*\]$/)
+
+    // If it's a valid word, check if it's a negated word (G-prefixed)
+    if (isValidWord && firstWord.startsWith('G-')) {
+      // Return the negated word with the hyphen preserved
+      return firstWord
+    }
+
     return isValidWord ? firstWord : ''
   }
 
@@ -185,9 +192,16 @@ export default function EnochianTranslator() {
     // No unnecessary conditional needed, just proceed with using the word
     if (Object.prototype.hasOwnProperty.call(constructionDetails, word)) {
       const details = constructionDetails[word]
-      // Strip any punctuation from the result
-      const cleanResult = details.result.replace(/[.,;:!?'"()-]/g, '')
-      setWordToAnalyze(cleanResult)
+
+      // Special handling for negated words (G-something)
+      if (details.result.startsWith('G-')) {
+        // For negated words, only remove punctuation except for the hyphen
+        setWordToAnalyze(details.result)
+      } else {
+        // Strip any punctuation from the result
+        const cleanResult = details.result.replace(/[.,;:!?'"()-]/g, '')
+        setWordToAnalyze(cleanResult)
+      }
     }
   }
 
@@ -543,18 +557,6 @@ export default function EnochianTranslator() {
 
               <Separator />
 
-              {/* Root Analysis */}
-              <div className="w-full">
-                <h4 className="text-sm font-medium mb-2">
-                  Enochian Root Analysis:
-                </h4>
-                <div className="bg-accent/30 rounded-md p-4 border break-words overflow-auto">
-                  {renderRootAnalysis()}
-                </div>
-              </div>
-
-              <Separator />
-
               {/* Words Display */}
               <div>
                 <h3 className="text-sm font-medium mb-2">Words:</h3>
@@ -578,7 +580,14 @@ export default function EnochianTranslator() {
                 <h3 className="text-sm font-medium mb-2">Phonetic:</h3>
                 <div className="relative">
                   <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
-                    <span>{phoneticResult}</span>
+                    {phoneticResult.split(' ').map((word, index) => (
+                      <span
+                        key={`phonetic-word-${index}`}
+                        className="inline-block bg-secondary rounded px-1.5 py-0.5 m-0.5 border border-border/30"
+                      >
+                        {word}
+                      </span>
+                    ))}
                   </div>
                   <Button
                     size="icon"
@@ -588,6 +597,16 @@ export default function EnochianTranslator() {
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
+                </div>
+              </div>
+
+              {/* Root Analysis */}
+              <div className="w-full">
+                <h4 className="text-sm font-medium mb-2">
+                  Enochian Root Analysis:
+                </h4>
+                <div className="bg-accent/30 rounded-md p-4 border break-words overflow-auto">
+                  {renderRootAnalysis()}
                 </div>
               </div>
 

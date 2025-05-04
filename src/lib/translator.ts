@@ -1110,6 +1110,20 @@ export class Translator {
   public analyzeRoots(
     word: string,
   ): Array<{ letter: string; root?: EnochianRoot }> {
+    // Special handling for negation prefix
+    if (word.startsWith('G-')) {
+      // First analyze the 'G' as the negation root
+      const gRoot = this.findRootForLetter('g')
+
+      // Then analyze the base word (after the G- prefix)
+      const baseWord = word.substring(2) // Remove 'G-'
+      const baseRoots = this.analyzeRoots(baseWord)
+
+      // Combine the G root with the base word roots (skip the hyphen)
+      return [{ letter: 'g', root: gRoot }, ...baseRoots]
+    }
+
+    // Regular word analysis
     return Array.from(word.toLowerCase())
       .filter((char) => /[a-z]/i.test(char)) // Only analyze letters
       .map((letter) => ({

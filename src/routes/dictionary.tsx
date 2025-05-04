@@ -27,8 +27,7 @@ function Dictionary() {
           </CardHeader>
           <CardContent className="flex flex-col items-center">
             <p className="mb-6 text-center">
-              The PDF should have opened in a new tab. If it didn't, you can use
-              the buttons below:
+              You can view the dictionary in a new tab or download it.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

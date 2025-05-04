@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
 import { useEnochianDictionary } from '@/hooks/useEnochianDictionary'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
@@ -46,6 +47,7 @@ export default function EnochianTranslator() {
     phraseMatches,
     dialogOpen,
     dialogContent,
+    hoverSelectEnabled,
     setInput,
     setTranslationResult,
     setPhoneticResult,
@@ -59,6 +61,7 @@ export default function EnochianTranslator() {
     setPhraseMatches,
     setDialogOpen,
     setDialogContent,
+    setHoverSelectEnabled,
     resetState,
   } = useTranslatorStore()
 
@@ -331,9 +334,14 @@ export default function EnochianTranslator() {
               <span
                 key={`phrase-${i}`}
                 className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border bg-purple-100 text-purple-800 border-purple-300 font-medium ${
-                  selectedWord === phrase ? 'ring-2 ring-primary' : ''
+                  selectedWord === phrase
+                    ? 'ring-2 ring-primary bg-purple-200'
+                    : ''
                 }`}
                 onClick={() => handlePhraseClick(phrase, enochianWord)}
+                onMouseEnter={() =>
+                  hoverSelectEnabled && handlePhraseClick(phrase, enochianWord)
+                }
               >
                 {enochianWord}
                 <div className="text-xs text-black mt-1">({phrase})</div>
@@ -347,11 +355,19 @@ export default function EnochianTranslator() {
                   <TooltipTrigger asChild>
                     <span
                       className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border bg-purple-100 text-purple-800 border-purple-300 font-medium ${
-                        selectedWord === phrase ? 'ring-2 ring-primary' : ''
+                        selectedWord === phrase
+                          ? 'ring-2 ring-primary bg-purple-200'
+                          : ''
                       }`}
                       onClick={() => {
                         setSelectedWord(phrase)
                         setWordToAnalyze(enochianWord)
+                      }}
+                      onMouseEnter={() => {
+                        if (hoverSelectEnabled) {
+                          setSelectedWord(phrase)
+                          setWordToAnalyze(enochianWord)
+                        }
                       }}
                     >
                       {enochianWord}
@@ -415,9 +431,12 @@ export default function EnochianTranslator() {
               <span
                 key={`word-${i}`}
                 className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border ${
-                  selectedWord === word ? 'ring-2 ring-primary' : ''
+                  selectedWord === word
+                    ? 'ring-2 ring-primary bg-opacity-70'
+                    : ''
                 } ${details.method === 'missing' ? '' : methodClass}`}
                 onClick={() => handleWordClick(word)}
+                onMouseEnter={() => handleWordHover(word)}
               >
                 {details.result}
                 <div className="text-xs text-black mt-1">({word})</div>
@@ -431,9 +450,12 @@ export default function EnochianTranslator() {
                   <TooltipTrigger asChild>
                     <span
                       className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border ${
-                        selectedWord === word ? 'ring-2 ring-primary' : ''
+                        selectedWord === word
+                          ? 'ring-2 ring-primary bg-opacity-70'
+                          : ''
                       } ${details.method === 'missing' ? '' : methodClass}`}
                       onClick={() => handleWordClick(word)}
+                      onMouseEnter={() => handleWordHover(word)}
                     >
                       {details.result}
                       <div className="text-xs text-black mt-1">({word})</div>
@@ -464,6 +486,57 @@ export default function EnochianTranslator() {
     }
 
     return result
+  }
+
+  // Handle phonetic word click
+  const handlePhoneticClick = (phoneticWord: string, index: number) => {
+    // Find the corresponding English word
+    const originalWords = input.split(/\s+/)
+    // If we have a valid index and it's within range
+    if (index >= 0 && index < originalWords.length) {
+      const englishWord = originalWords[index]
+      setSelectedWord(englishWord)
+
+      // Handle word analysis (same logic as handleWordClick)
+      if (
+        Object.prototype.hasOwnProperty.call(constructionDetails, englishWord)
+      ) {
+        const details = constructionDetails[englishWord]
+
+        // For mobile, open dialog with word details
+        if (isMobile) {
+          setDialogContent({
+            word: englishWord,
+            result: details.result,
+            method: details.method,
+            explanation: details.explanation,
+          })
+          setDialogOpen(true)
+        }
+
+        // Handle word analysis
+        if (details.result.startsWith('G-')) {
+          setWordToAnalyze(details.result)
+        } else {
+          const cleanResult = details.result.replace(/[.,;:!?'"()-]/g, '')
+          setWordToAnalyze(cleanResult)
+        }
+      }
+    }
+  }
+
+  // Handle word hover for hover selection mode
+  const handleWordHover = (word: string) => {
+    if (hoverSelectEnabled) {
+      handleWordClick(word)
+    }
+  }
+
+  // Handle phonetic word hover for hover selection mode
+  const handlePhoneticHover = (phoneticWord: string, index: number) => {
+    if (hoverSelectEnabled) {
+      handlePhoneticClick(phoneticWord, index)
+    }
   }
 
   return isLoading ? (
@@ -614,6 +687,19 @@ export default function EnochianTranslator() {
                     </Badge>
                   )}
                 </div>
+                <div className="flex items-center mt-4 space-x-2">
+                  <Switch
+                    id="hover-select"
+                    checked={hoverSelectEnabled}
+                    onCheckedChange={setHoverSelectEnabled}
+                  />
+                  <label
+                    htmlFor="hover-select"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Enable hover selection
+                  </label>
+                </div>
                 <div className="mt-3 text-xs text-muted space-y-1">
                   <p>Words in [brackets] have no direct Enochian equivalent.</p>
                   <p>
@@ -656,14 +742,26 @@ export default function EnochianTranslator() {
                 <h3 className="text-sm font-medium mb-2">Phonetic:</h3>
                 <div className="relative">
                   <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
-                    {phoneticResult.split(' ').map((word, index) => (
-                      <span
-                        key={`phonetic-word-${index}`}
-                        className="inline-block bg-secondary rounded px-1.5 py-0.5 m-0.5 border border-border/30"
-                      >
-                        {word}
-                      </span>
-                    ))}
+                    {phoneticResult.split(' ').map((word, index) => {
+                      // Find corresponding original word to check if it's selected
+                      const originalWords = input.split(/\s+/)
+                      const isSelected = selectedWord === originalWords[index]
+
+                      return (
+                        <span
+                          key={`phonetic-word-${index}`}
+                          className={`inline-block rounded px-1.5 py-0.5 m-0.5 border cursor-pointer ${
+                            isSelected
+                              ? 'bg-primary/20 border-primary ring-1 ring-primary'
+                              : 'bg-secondary border-border/30'
+                          }`}
+                          onClick={() => handlePhoneticClick(word, index)}
+                          onMouseEnter={() => handlePhoneticHover(word, index)}
+                        >
+                          {word}
+                        </span>
+                      )
+                    })}
                   </div>
                   <Button
                     size="icon"

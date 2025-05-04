@@ -44,6 +44,7 @@ interface TranslatorState {
   constructionDetails: ConstructionDetails
   selectedWord: string | null
   phraseMatches: Record<string, string>
+  hoverSelectEnabled: boolean
 
   // Mobile dialog
   dialogOpen: boolean
@@ -63,6 +64,7 @@ interface TranslatorState {
   setPhraseMatches: (matches: Record<string, string>) => void
   setDialogOpen: (open: boolean) => void
   setDialogContent: (content: DialogContent) => void
+  setHoverSelectEnabled: (enabled: boolean) => void
   resetState: () => void
 }
 
@@ -81,6 +83,7 @@ const initialState = {
   phraseMatches: {},
   dialogOpen: false,
   dialogContent: { word: '', result: '', method: '', explanation: '' },
+  hoverSelectEnabled: false,
 }
 
 export const useTranslatorStore = create<TranslatorState>()(
@@ -103,6 +106,8 @@ export const useTranslatorStore = create<TranslatorState>()(
       setPhraseMatches: (phraseMatches) => set({ phraseMatches }),
       setDialogOpen: (dialogOpen) => set({ dialogOpen }),
       setDialogContent: (dialogContent) => set({ dialogContent }),
+      setHoverSelectEnabled: (hoverSelectEnabled) =>
+        set({ hoverSelectEnabled }),
 
       // Reset all state
       resetState: () => set(initialState),
@@ -118,6 +123,7 @@ export const useTranslatorStore = create<TranslatorState>()(
         matchCounts: state.matchCounts,
         wordToAnalyze: state.wordToAnalyze,
         selectedWord: state.selectedWord,
+        hoverSelectEnabled: state.hoverSelectEnabled,
         // We don't need to persist these as they can be reconstructed:
         // wordAnalysis, currentAnalysis, constructionDetails, phraseMatches
       }),

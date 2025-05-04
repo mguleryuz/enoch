@@ -1024,8 +1024,8 @@ export class Translator {
 
       // Handle symbol conversion
       if (isSpecialCase) {
-        // For special cases like "I" → "Gon", keep the Enochian word directly
-        symbolText = directRoot.symbol
+        // For special cases like "I" → "Gon", use the symbol but with regex replacement
+        symbolText = symbolText.replace(regex, directRoot.symbol)
       } else if (originalRoots && originalRoots.length > 0) {
         // If we have original roots, use those for symbol representation
         const symbolVersion = originalRoots.map((root) => root.symbol).join('')

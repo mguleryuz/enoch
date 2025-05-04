@@ -336,6 +336,7 @@ export default function EnochianTranslator() {
                 onClick={() => handlePhraseClick(phrase, enochianWord)}
               >
                 {enochianWord}
+                <div className="text-xs text-black mt-1">({phrase})</div>
               </span>,
             )
           } else {
@@ -354,6 +355,7 @@ export default function EnochianTranslator() {
                       }}
                     >
                       {enochianWord}
+                      <div className="text-xs text-black mt-1">({phrase})</div>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-sm">
@@ -418,6 +420,7 @@ export default function EnochianTranslator() {
                 onClick={() => handleWordClick(word)}
               >
                 {details.result}
+                <div className="text-xs text-black mt-1">({word})</div>
               </span>,
             )
           } else {
@@ -433,6 +436,7 @@ export default function EnochianTranslator() {
                       onClick={() => handleWordClick(word)}
                     >
                       {details.result}
+                      <div className="text-xs text-black mt-1">({word})</div>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-sm">

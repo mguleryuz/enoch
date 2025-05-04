@@ -531,16 +531,10 @@ export default function EnochianTranslator() {
               onKeyDown={handleKeyDown}
               className="min-h-28 text-base resize-none p-3 focus:ring-2"
             />
-            <div className="flex items-center justify-between">
-              <Button
-                onClick={handleTranslate}
-                disabled={!input.trim()}
-                className="relative overflow-hidden group"
-                size="lg"
-              >
-                Translate
-                <span className="absolute inset-0 flex items-center justify-center bg-primary/0 group-hover:bg-primary/10 transition-all duration-300"></span>
-              </Button>
+            <div className="flex items-center justify-between gap-5">
+              <p className="text-xs text-muted italic">
+                Results are automatically updated as you type.
+              </p>
 
               <div className="flex gap-2">
                 <Button
@@ -553,10 +547,6 @@ export default function EnochianTranslator() {
                 </Button>
               </div>
             </div>
-            <p className="text-xs text-muted italic">
-              Results are automatically updated as you type. Press Ctrl+Enter to
-              translate manually.
-            </p>
           </div>
         </CardContent>
       </Card>

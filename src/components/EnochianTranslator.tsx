@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, Check, Copy } from 'lucide-react'
+import { AlertCircle, Check, Copy, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Separator } from './ui/separator'
 import { Badge } from '@/components/ui/badge'
@@ -18,7 +18,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useEnochianDictionary } from '@/hooks/useEnochianDictionary'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { cn } from '@/lib/utils'
 
 // Debounce utility function
 const useDebounce = <T,>(value: T, delay: number): T => {
@@ -69,6 +77,18 @@ export default function EnochianTranslator() {
   >({})
   const [selectedWord, setSelectedWord] = useState<string | null>(null)
   const [phraseMatches, setPhraseMatches] = useState<Record<string, string>>({})
+
+  // New state for mobile dialogs
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogContent, setDialogContent] = useState<{
+    word: string
+    result: string
+    method: string
+    explanation: string
+  }>({ word: '', result: '', method: '', explanation: '' })
+
+  // Media query hook to detect mobile
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   // Use the custom dictionary hook
   const { data: translator, isLoading, error } = useEnochianDictionary()
@@ -189,9 +209,20 @@ export default function EnochianTranslator() {
 
   const handleWordClick = (word: string) => {
     setSelectedWord(word)
-    // No unnecessary conditional needed, just proceed with using the word
+
     if (Object.prototype.hasOwnProperty.call(constructionDetails, word)) {
       const details = constructionDetails[word]
+
+      // For mobile, open dialog with word details
+      if (isMobile) {
+        setDialogContent({
+          word,
+          result: details.result,
+          method: details.method,
+          explanation: details.explanation,
+        })
+        setDialogOpen(true)
+      }
 
       // Special handling for negated words (G-something)
       if (details.result.startsWith('G-')) {
@@ -202,6 +233,29 @@ export default function EnochianTranslator() {
         const cleanResult = details.result.replace(/[.,;:!?'"()-]/g, '')
         setWordToAnalyze(cleanResult)
       }
+    }
+  }
+
+  // Handle phrase click (for mobile)
+  const handlePhraseClick = (phrase: string, enochianWord: string) => {
+    setSelectedWord(phrase)
+    setWordToAnalyze(enochianWord)
+
+    // For mobile, show phrase details in dialog
+    if (
+      isMobile &&
+      Object.prototype.hasOwnProperty.call(constructionDetails, phrase)
+    ) {
+      const details = constructionDetails[phrase]
+      setDialogContent({
+        word: phrase,
+        result: enochianWord,
+        method: 'phrase match',
+        explanation:
+          details.explanation ||
+          `Phrase match: "${phrase}" → "${enochianWord}"`,
+      })
+      setDialogOpen(true)
     }
   }
 
@@ -262,7 +316,7 @@ export default function EnochianTranslator() {
     )
   }
 
-  // Modify renderAnnotatedTranslation to handle phrase matches
+  // Modify renderAnnotatedTranslation to handle mobile differently
   const renderAnnotatedTranslation = () => {
     const words = input.split(/\s+/)
     const result: Array<React.ReactElement> = []
@@ -285,46 +339,62 @@ export default function EnochianTranslator() {
           // This is a phrase match!
           const enochianWord = phraseMatches[phrase]
 
-          result.push(
-            <TooltipProvider key={`phrase-${i}`}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border bg-purple-100 text-purple-800 border-purple-300 font-medium ${
-                      selectedWord === phrase ? 'ring-2 ring-primary' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedWord(phrase)
-                      setWordToAnalyze(enochianWord)
-                    }}
-                  >
-                    {enochianWord}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-sm">
-                  <div className="space-y-1 p-1">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">{phrase}</span>
-                      <Badge
-                        variant="outline"
-                        className="bg-purple-100 text-purple-800 border-purple-300"
-                      >
-                        phrase match
-                      </Badge>
+          if (isMobile) {
+            // Mobile version (no tooltip)
+            result.push(
+              <span
+                key={`phrase-${i}`}
+                className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border bg-purple-100 text-purple-800 border-purple-300 font-medium ${
+                  selectedWord === phrase ? 'ring-2 ring-primary' : ''
+                }`}
+                onClick={() => handlePhraseClick(phrase, enochianWord)}
+              >
+                {enochianWord}
+              </span>,
+            )
+          } else {
+            // Desktop version (with tooltip)
+            result.push(
+              <TooltipProvider key={`phrase-${i}`}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border bg-purple-100 text-purple-800 border-purple-300 font-medium ${
+                        selectedWord === phrase ? 'ring-2 ring-primary' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedWord(phrase)
+                        setWordToAnalyze(enochianWord)
+                      }}
+                    >
+                      {enochianWord}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <div className="space-y-1 p-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">{phrase}</span>
+                        <Badge
+                          variant="outline"
+                          className="bg-purple-100 text-purple-800 border-purple-300"
+                        >
+                          phrase match
+                        </Badge>
+                      </div>
+                      <p className="text-xs">
+                        {Object.prototype.hasOwnProperty.call(
+                          constructionDetails,
+                          phrase,
+                        )
+                          ? constructionDetails[phrase].explanation
+                          : `Phrase match: "${phrase}" → "${enochianWord}"`}
+                      </p>
                     </div>
-                    <p className="text-xs">
-                      {Object.prototype.hasOwnProperty.call(
-                        constructionDetails,
-                        phrase,
-                      )
-                        ? constructionDetails[phrase].explanation
-                        : `Phrase match: "${phrase}" → "${enochianWord}"`}
-                    </p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>,
-          )
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>,
+            )
+          }
 
           // Add a space after each phrase
           result.push(<span key={`space-after-phrase-${i}`}> </span>)
@@ -351,33 +421,49 @@ export default function EnochianTranslator() {
           const details = constructionDetails[word]
           const methodClass = getMethodBadgeColor(details.method)
 
-          result.push(
-            <TooltipProvider key={`word-${i}`}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border ${
-                      selectedWord === word ? 'ring-2 ring-primary' : ''
-                    } ${details.method === 'missing' ? '' : methodClass}`}
-                    onClick={() => handleWordClick(word)}
-                  >
-                    {details.result}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-sm">
-                  <div className="space-y-1 p-1">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">{word}</span>
-                      <Badge variant="outline" className={methodClass}>
-                        {details.method}
-                      </Badge>
+          if (isMobile) {
+            // Mobile version (no tooltip)
+            result.push(
+              <span
+                key={`word-${i}`}
+                className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border ${
+                  selectedWord === word ? 'ring-2 ring-primary' : ''
+                } ${details.method === 'missing' ? '' : methodClass}`}
+                onClick={() => handleWordClick(word)}
+              >
+                {details.result}
+              </span>,
+            )
+          } else {
+            // Desktop version (with tooltip)
+            result.push(
+              <TooltipProvider key={`word-${i}`}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className={`cursor-pointer rounded px-2 py-1 mx-1 my-1 inline-block border ${
+                        selectedWord === word ? 'ring-2 ring-primary' : ''
+                      } ${details.method === 'missing' ? '' : methodClass}`}
+                      onClick={() => handleWordClick(word)}
+                    >
+                      {details.result}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <div className="space-y-1 p-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">{word}</span>
+                        <Badge variant="outline" className={methodClass}>
+                          {details.method}
+                        </Badge>
+                      </div>
+                      <p className="text-xs">{details.explanation}</p>
                     </div>
-                    <p className="text-xs">{details.explanation}</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>,
-          )
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>,
+            )
+          }
 
           // Add a space after each word
           result.push(<span key={`space-after-word-${i}`}> </span>)
@@ -633,6 +719,36 @@ export default function EnochianTranslator() {
           </CardContent>
         </Card>
       )}
+
+      {/* Mobile Word Details Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{dialogContent.word}</span>
+              <Badge
+                variant="outline"
+                className={cn(
+                  'mr-4',
+                  getMethodBadgeColor(dialogContent.method),
+                )}
+              >
+                {dialogContent.method}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-3">
+            <div className="flex items-center">
+              <span className="text-sm font-medium mr-2">Translated to:</span>
+              <span className="text-base">{dialogContent.result}</span>
+            </div>
+            <div>
+              <span className="text-sm font-medium">Explanation:</span>
+              <p className="text-sm mt-1">{dialogContent.explanation}</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

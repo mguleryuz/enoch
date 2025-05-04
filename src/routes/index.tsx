@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ChevronDown, Info } from 'lucide-react'
+import { ChevronDown, Info, X } from 'lucide-react'
 import EnochianAlphabet from '../components/EnochianAlphabet'
 import EnochianTranslator from '../components/EnochianTranslator'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -25,6 +32,28 @@ export const Route = createFileRoute('/')({
 
 function Index() {
   const [showInfo, setShowInfo] = useState(true)
+  const [dialogInfo, setDialogInfo] = useState<{
+    title: string
+    content: string
+    isOpen: boolean
+  }>({
+    title: '',
+    content: '',
+    isOpen: false,
+  })
+
+  // Media query for mobile detection
+  const isMobile = useMediaQuery('(max-width: 768px)')
+
+  const handleInfoClick = (title: string, content: string) => {
+    if (isMobile) {
+      setDialogInfo({
+        title,
+        content,
+        isOpen: true,
+      })
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background py-6 md:py-10">
@@ -70,60 +99,103 @@ function Index() {
                   it was purportedly the language used by angels.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="p-2 bg-accent rounded-md text-center cursor-help">
-                          <strong>Writing System:</strong> 21 letters
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">
-                          Enochian uses a unique alphabet of 21 characters, each
-                          with its own phonetic value and mystical significance.
-                          The letters have distinctive shapes often resembling
-                          modified Roman or Greek letters.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {isMobile ? (
+                    <div
+                      className="p-2 bg-accent rounded-md text-center cursor-pointer"
+                      onClick={() =>
+                        handleInfoClick(
+                          'Writing System: 21 letters',
+                          'Enochian uses a unique alphabet of 21 characters, each with its own phonetic value and mystical significance. The letters have distinctive shapes often resembling modified Roman or Greek letters.',
+                        )
+                      }
+                    >
+                      <strong>Writing System:</strong> 21 letters
+                    </div>
+                  ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="p-2 bg-accent rounded-md text-center cursor-help">
+                            <strong>Writing System:</strong> 21 letters
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Enochian uses a unique alphabet of 21 characters,
+                            each with its own phonetic value and mystical
+                            significance. The letters have distinctive shapes
+                            often resembling modified Roman or Greek letters.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
 
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="p-2 bg-accent rounded-md text-center cursor-help">
-                          <strong>Word Order:</strong> VSO
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">
-                          VSO (Verb-Subject-Object) means that in Enochian
-                          sentences, the verb typically comes first, followed by
-                          the subject and then the object. This differs from
-                          English's standard SVO (Subject-Verb-Object) pattern.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {isMobile ? (
+                    <div
+                      className="p-2 bg-accent rounded-md text-center cursor-pointer"
+                      onClick={() =>
+                        handleInfoClick(
+                          'Word Order: VSO',
+                          "VSO (Verb-Subject-Object) means that in Enochian sentences, the verb typically comes first, followed by the subject and then the object. This differs from English's standard SVO (Subject-Verb-Object) pattern.",
+                        )
+                      }
+                    >
+                      <strong>Word Order:</strong> VSO
+                    </div>
+                  ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="p-2 bg-accent rounded-md text-center cursor-help">
+                            <strong>Word Order:</strong> VSO
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            VSO (Verb-Subject-Object) means that in Enochian
+                            sentences, the verb typically comes first, followed
+                            by the subject and then the object. This differs
+                            from English's standard SVO (Subject-Verb-Object)
+                            pattern.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
 
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="p-2 bg-accent rounded-md text-center cursor-help">
-                          <strong>Structure:</strong> Agglutinative
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">
-                          Agglutinative languages form words by joining
-                          morphemes (word elements) together. In Enochian,
-                          complex words are created by combining simpler
-                          elements, with each element retaining its meaning and
-                          form.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {isMobile ? (
+                    <div
+                      className="p-2 bg-accent rounded-md text-center cursor-pointer"
+                      onClick={() =>
+                        handleInfoClick(
+                          'Structure: Agglutinative',
+                          'Agglutinative languages form words by joining morphemes (word elements) together. In Enochian, complex words are created by combining simpler elements, with each element retaining its meaning and form.',
+                        )
+                      }
+                    >
+                      <strong>Structure:</strong> Agglutinative
+                    </div>
+                  ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="p-2 bg-accent rounded-md text-center cursor-help">
+                            <strong>Structure:</strong> Agglutinative
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Agglutinative languages form words by joining
+                            morphemes (word elements) together. In Enochian,
+                            complex words are created by combining simpler
+                            elements, with each element retaining its meaning
+                            and form.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -165,6 +237,23 @@ function Index() {
           </p>
         </footer>
       </div>
+
+      {/* Mobile dialog for info tooltips */}
+      <Dialog
+        open={dialogInfo.isOpen}
+        onOpenChange={(open) =>
+          setDialogInfo((prev) => ({ ...prev, isOpen: open }))
+        }
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{dialogInfo.title}</DialogTitle>
+          </DialogHeader>
+          <div className="pt-2">
+            <p>{dialogInfo.content}</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

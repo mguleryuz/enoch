@@ -29,11 +29,14 @@ describe('Negation Handling Tests', () => {
       const result = translator.translate('I am mortal')
       const negatedResult = translator.translate('I am immortal')
 
+      console.log('Regular result:', result.translationText)
+      console.log('Negated result:', negatedResult.translationText)
+
       // "mortal" should be directly translated
       expect(result.translationText).toContain('AGIOD')
 
-      // "immortal" should be translated using the OL prefix with the root word
-      expect(negatedResult.translationText).toContain('OLAGIOD')
+      // "immortal" should be translated using the G- prefix with the root word
+      expect(negatedResult.translationText).toContain('G-AGIOD')
       expect(negatedResult.translationText).not.toContain('AGIOD ')
 
       // Check the explanation
@@ -42,7 +45,7 @@ describe('Negation Handling Tests', () => {
       ).find((detail: any) => detail.original === 'immortal')
       expect(immortalDetails).toBeDefined()
       if (immortalDetails) {
-        expect(immortalDetails.explanation).toContain('Negation handling')
+        expect(immortalDetails.explanation).toContain('Negation prefix')
       }
     })
 
@@ -53,12 +56,12 @@ describe('Negation Handling Tests', () => {
       const baseResult = translator.translate(baseWord)
       const negatedResult = translator.translate(negatedWord)
 
-      // The negated word should use the OL prefix, not match the root directly
+      // The negated word should use the G- prefix, not match the root directly
       expect(negatedResult.translationText).not.toBe(baseResult.translationText)
 
       if (baseResult.translationText !== `[${baseWord}]`) {
-        // If the base word has a translation, check that negated form uses OL prefix
-        expect(negatedResult.translationText).toContain('OL')
+        // If the base word has a translation, check that negated form uses G- prefix
+        expect(negatedResult.translationText).toContain('G-')
       }
     })
 
@@ -68,7 +71,7 @@ describe('Negation Handling Tests', () => {
 
       // If there's a direct translation for "human"
       if (!baseResult.translationText.includes('[human]')) {
-        // The negated version should include the OL prefix
+        // The negated version should include the G- prefix
         expect(negatedResult.translationText).not.toBe(
           baseResult.translationText,
         )
@@ -80,7 +83,7 @@ describe('Negation Handling Tests', () => {
 
         // If it matched via our negation handling, verify the explanation
         if (nonhumanDetails && nonhumanDetails.method === 'partial') {
-          expect(nonhumanDetails.explanation).toContain('Negation handling')
+          expect(nonhumanDetails.explanation).toContain('Negation prefix')
         }
       }
     })
@@ -88,41 +91,26 @@ describe('Negation Handling Tests', () => {
 
   describe('Preventing Incorrect Meaning Matches', () => {
     it('should not match "immortal" as containing "mortal"', () => {
-      const result = translator.translate('immortal')
+      const mortalResult = translator.translate('mortal')
+      const immortalResult = translator.translate('immortal')
 
-      // Verify the explanation doesn't mention "mortal appears in immortal"
-      const details = Object.values(result.constructionDetails).find(
-        (detail: any) => detail.original === 'immortal',
+      // immortal should not be translated the same as mortal
+      expect(immortalResult.translationText).not.toEqual(
+        mortalResult.translationText,
       )
 
-      if (details && details.method === 'partial') {
-        expect(details.explanation).not.toContain('mortal appears in immortal')
-      }
+      // Check that it's using the negation prefix approach
+      expect(immortalResult.translationText).toContain('G-')
     })
 
     it('should not match "invisible" as containing "visible"', () => {
-      const result = translator.translate('invisible visible')
+      const visibleResult = translator.translate('visible')
+      const invisibleResult = translator.translate('invisible')
 
-      // Get the construction details for both words
-      const invisibleDetails = Object.values(result.constructionDetails).find(
-        (detail: any) => detail.original === 'invisible',
+      // invisible should not be translated the same as visible
+      expect(invisibleResult.translationText).not.toEqual(
+        visibleResult.translationText,
       )
-      const visibleDetails = Object.values(result.constructionDetails).find(
-        (detail: any) => detail.original === 'visible',
-      )
-
-      // If both words have details and translations
-      if (invisibleDetails && visibleDetails) {
-        // Their translations should be different (one should not contain the other)
-        expect(invisibleDetails.result).not.toBe(visibleDetails.result)
-
-        // Check if invisible matched with negation
-        if (invisibleDetails.method === 'partial') {
-          expect(invisibleDetails.explanation).not.toContain(
-            'visible appears in invisible',
-          )
-        }
-      }
     })
   })
 
@@ -136,8 +124,8 @@ describe('Negation Handling Tests', () => {
       )
 
       if (details && details.method === 'partial') {
-        expect(details.explanation).toContain('Negation handling')
-        expect(details.result).toContain('OL')
+        expect(details.explanation).toContain('Negation prefix')
+        expect(details.result).toContain('G-')
       }
     })
 
@@ -161,7 +149,7 @@ describe('Negation Handling Tests', () => {
         )
 
         if (details && details.method === 'partial') {
-          expect(details.explanation).toContain('Negation handling')
+          expect(details.explanation).toContain('Negation prefix')
         }
       }
     })

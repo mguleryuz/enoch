@@ -188,19 +188,22 @@ export class Translator {
 
     const opts = { ...defaultOptions, ...options }
 
+    // Clean the input text - normalize whitespace and remove leading/trailing whitespace
+    const cleanedText = (text || '').trim().replace(/\s+/g, ' ')
+
     // Handle empty input
-    if (!text.trim()) {
+    if (!cleanedText) {
       return this.createEmptyResult()
     }
 
     // Check for exact phrase match first
     if (opts.checkPhrases) {
-      const phraseResult = this.checkForPhraseMatch(text.trim())
+      const phraseResult = this.checkForPhraseMatch(cleanedText)
       if (phraseResult) return phraseResult
     }
 
     // Process individual words
-    return this.processText(text, opts)
+    return this.processText(cleanedText, opts)
   }
 
   // Create an empty result for empty input
@@ -355,7 +358,12 @@ export class Translator {
     text: string,
     options: Required<TranslationOptions>,
   ): TranslationResult {
-    const words = text.split(/\s+/)
+    // Clean the input text - trim whitespace and normalize spaces
+    const cleanedText = text.trim().replace(/\s+/g, ' ')
+
+    // Split into words, filtering out any empty strings
+    const words = cleanedText.split(/\s+/).filter((word) => word.length > 0)
+
     const stats = {
       direct: 0,
       partial: 0,
@@ -385,6 +393,9 @@ export class Translator {
     // Now process individual words
     const result = processedWords
       .map((word) => {
+        // Skip empty words or just whitespace
+        if (!word.trim()) return ''
+
         // Skip phrase markers that were replaced during phrase matching
         if (word.startsWith('__PHRASE_MATCH_')) {
           // Check if this marker has already been processed
@@ -459,8 +470,17 @@ export class Translator {
       total: number
     },
   ): void {
+    // Filter out any empty words before processing
+    const filteredWords = words.filter((word) => word.trim().length > 0)
+
+    // Only proceed if we have words to process
+    if (filteredWords.length === 0) return
+
     // Try different sliding windows of words
     for (let i = 0; i < words.length; i++) {
+      // Skip empty words or whitespace-only words
+      if (!words[i] || !words[i].trim()) continue
+
       // Skip if this word is already part of a phrase
       if (words[i].startsWith('__PHRASE_MATCH_')) continue
 
@@ -469,7 +489,13 @@ export class Translator {
         if (words.slice(i, j).some((w) => w.startsWith('__PHRASE_MATCH_')))
           continue
 
-        const phrase = words.slice(i, j).join(' ')
+        // Skip if any of these words are empty or just whitespace
+        if (words.slice(i, j).some((w) => !w || !w.trim())) continue
+
+        const phrase = words.slice(i, j).join(' ').trim()
+        // Skip empty phrases
+        if (!phrase) continue
+
         const match = this.findFuzzyPhraseMatch(phrase)
 
         if (match) {
@@ -803,39 +829,42 @@ export class Translator {
       { prefix: 'anti', fullPrefix: 'anti' },
     ]
 
-    // Use G- as the Enochian negation prefix (common in Enochian texts)
+    // Use G- as the Enochian negation prefix (G is the Enochian root of negation)
     const enochianNegationPrefix = 'G'
 
-    // Check if word starts with any negation prefix
+    // Check if the word starts with any of the negation prefixes
     for (const { prefix, fullPrefix } of negationPrefixes) {
-      if (word.startsWith(prefix)) {
-        // Get the root word (without the negation prefix)
-        const rootWord = word.substring(prefix.length)
+      if (word.toLowerCase().startsWith(prefix.toLowerCase())) {
+        // Extract the base word (without the negation prefix)
+        const baseWord = word.slice(fullPrefix.length)
 
-        // Check if the root word exists in our dictionary
-        const rootWordMatch = this.meaningToWordMap.get(rootWord)
+        // Only proceed if the base word has at least 3 characters
+        if (baseWord.length >= 3) {
+          // Check if the root word exists in our dictionary
+          const rootWordMatch = this.meaningToWordMap.get(baseWord)
 
-        if (rootWordMatch) {
-          // Create an Enochian negated version using the OL- prefix
-          const negatedWord = `${enochianNegationPrefix}${rootWordMatch}`
+          if (rootWordMatch) {
+            // Create an Enochian negated version using the G- prefix
+            const negatedWord = `${enochianNegationPrefix}-${rootWordMatch}`
 
-          return {
-            word: negatedWord,
-            explanation: `Negation handling: "${word}" → "${fullPrefix}-" + "${rootWord}" → "${enochianNegationPrefix}-${rootWordMatch}"`,
+            return {
+              word: negatedWord,
+              explanation: `Negation prefix "${fullPrefix}-" in "${word}" → "${baseWord}" → "${rootWordMatch}" → "${negatedWord}"`,
+            }
           }
-        }
 
-        // Try stemming the root word
-        const stemmedRoot = this.stemWord(rootWord)
-        const stemMatches = this.stemMap.get(stemmedRoot)
+          // Try stemming the root word
+          const stemmedRoot = this.stemWord(baseWord)
+          const stemMatches = this.stemMap.get(stemmedRoot)
 
-        if (stemMatches && stemMatches.length > 0) {
-          // Create an Enochian negated version using the OL- prefix
-          const negatedWord = `${enochianNegationPrefix}${stemMatches[0]}`
+          if (stemMatches && stemMatches.length > 0) {
+            // Create an Enochian negated version using the G- prefix
+            const negatedWord = `${enochianNegationPrefix}-${stemMatches[0]}`
 
-          return {
-            word: negatedWord,
-            explanation: `Negation handling with stemming: "${word}" → "${fullPrefix}-" + "${rootWord}" → "${stemmedRoot}" → "${enochianNegationPrefix}-${stemMatches[0]}"`,
+            return {
+              word: negatedWord,
+              explanation: `Negation prefix "${fullPrefix}-" in "${word}" → "${baseWord}" → "${stemmedRoot}" → "${negatedWord}"`,
+            }
           }
         }
       }
@@ -1035,6 +1064,14 @@ export class Translator {
       return word // Keep bracketed untranslated words as-is
     }
 
+    // Handle special case for negation prefix (G-)
+    if (word.startsWith('G-')) {
+      const prefix = 'Ged'
+      const baseWord = word.substring(2) // Remove 'G-'
+      const basePhonetic = this.convertToPhonetic(baseWord)
+      return `${prefix}-${basePhonetic}` // Properly join with hyphen
+    }
+
     return Array.from(word.toLowerCase())
       .map((char) => {
         if (/[a-z]/i.test(char) && char in this.enochianLetterMap) {
@@ -1049,6 +1086,14 @@ export class Translator {
   public convertToSymbols(word: string): string {
     if (word.startsWith('[') && word.endsWith(']')) {
       return word // Keep bracketed untranslated words as-is
+    }
+
+    // Handle special case for negation prefix (G-)
+    if (word.startsWith('G-')) {
+      const prefix = this.enochianLetterMap['g'].symbol
+      const baseWord = word.substring(2) // Remove 'G-'
+      const baseSymbols = this.convertToSymbols(baseWord)
+      return `${prefix}-${baseSymbols}` // Properly join with hyphen
     }
 
     return Array.from(word.toLowerCase())

@@ -488,54 +488,10 @@ export default function EnochianTranslator() {
     return result
   }
 
-  // Handle phonetic word click
-  const handlePhoneticClick = (phoneticWord: string, index: number) => {
-    // Find the corresponding English word
-    const originalWords = input.split(/\s+/)
-    // If we have a valid index and it's within range
-    if (index >= 0 && index < originalWords.length) {
-      const englishWord = originalWords[index]
-      setSelectedWord(englishWord)
-
-      // Handle word analysis (same logic as handleWordClick)
-      if (
-        Object.prototype.hasOwnProperty.call(constructionDetails, englishWord)
-      ) {
-        const details = constructionDetails[englishWord]
-
-        // For mobile, open dialog with word details
-        if (isMobile) {
-          setDialogContent({
-            word: englishWord,
-            result: details.result,
-            method: details.method,
-            explanation: details.explanation,
-          })
-          setDialogOpen(true)
-        }
-
-        // Handle word analysis
-        if (details.result.startsWith('G-')) {
-          setWordToAnalyze(details.result)
-        } else {
-          const cleanResult = details.result.replace(/[.,;:!?'"()-]/g, '')
-          setWordToAnalyze(cleanResult)
-        }
-      }
-    }
-  }
-
   // Handle word hover for hover selection mode
   const handleWordHover = (word: string) => {
     if (hoverSelectEnabled) {
       handleWordClick(word)
-    }
-  }
-
-  // Handle phonetic word hover for hover selection mode
-  const handlePhoneticHover = (phoneticWord: string, index: number) => {
-    if (hoverSelectEnabled) {
-      handlePhoneticClick(phoneticWord, index)
     }
   }
 
@@ -743,20 +699,10 @@ export default function EnochianTranslator() {
                 <div className="relative">
                   <div className="bg-accent/30 rounded-md p-4 pr-10 pt-8 border min-h-28 whitespace-pre-wrap text-lg break-words overflow-auto">
                     {phoneticResult.split(' ').map((word, index) => {
-                      // Find corresponding original word to check if it's selected
-                      const originalWords = input.split(/\s+/)
-                      const isSelected = selectedWord === originalWords[index]
-
                       return (
                         <span
                           key={`phonetic-word-${index}`}
-                          className={`inline-block rounded px-1.5 py-0.5 m-0.5 border cursor-pointer ${
-                            isSelected
-                              ? 'bg-primary/20 border-primary ring-1 ring-primary'
-                              : 'bg-secondary border-border/30'
-                          }`}
-                          onClick={() => handlePhoneticClick(word, index)}
-                          onMouseEnter={() => handlePhoneticHover(word, index)}
+                          className="inline-block rounded px-1.5 py-0.5 m-0.5 border bg-secondary border-border/30"
                         >
                           {word}
                         </span>

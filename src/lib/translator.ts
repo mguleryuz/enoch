@@ -714,30 +714,7 @@ export class Translator {
         }
       }
 
-      // Special case for "I"
-      if (word.toLowerCase() === 'i') {
-        // Look for matches with meanings containing "i" as a standalone pronoun
-        const possibleMatches = Array.from(
-          this.meaningToWordMap.entries(),
-        ).filter(
-          ([meaning, _]) =>
-            meaning.toLowerCase() === 'i' ||
-            meaning.toLowerCase() === 'i ' ||
-            meaning.toLowerCase() === ' i ' ||
-            meaning.toLowerCase() === ' i',
-        )
-
-        if (possibleMatches.length > 0) {
-          const [meaning, enochianWord] = possibleMatches[0]
-          return {
-            result: enochianWord,
-            method: 'direct',
-            explanation: `Match found for pronoun: "${word}" → "${meaning}" → "${enochianWord}"`,
-          }
-        }
-      }
-
-      // Fall back to using Enochian letter name
+      // Using Enochian letter name, when there is no direct match
       const root = this.findRootForLetter(word)
       if (root) {
         return {
@@ -1018,7 +995,12 @@ export class Translator {
 
       // Check if this is a special case like "I" → "Gon"
       const originalWord = enochianToOriginal.get(enochianWord)
-      const isSpecialCase = originalWord?.toLowerCase() === 'i'
+      const directRoot = this.rootData.find(
+        (root) =>
+          root.english_letter.toLocaleLowerCase() ===
+          originalWord?.toLowerCase(),
+      )
+      const isSpecialCase = !!directRoot
       const originalRoots = enochianToRoots.get(enochianWord)
 
       // Create regex to match the word with word boundaries
@@ -1043,7 +1025,7 @@ export class Translator {
       // Handle symbol conversion
       if (isSpecialCase) {
         // For special cases like "I" → "Gon", keep the Enochian word directly
-        // (already correct in symbolText)
+        symbolText = directRoot.symbol
       } else if (originalRoots && originalRoots.length > 0) {
         // If we have original roots, use those for symbol representation
         const symbolVersion = originalRoots.map((root) => root.symbol).join('')
@@ -1121,6 +1103,14 @@ export class Translator {
 
       // Combine the G root with the base word roots (skip the hyphen)
       return [{ letter: 'g', root: gRoot }, ...baseRoots]
+    }
+
+    // Check if the word is a direct root
+    const directRoot = this.rootData.find((root) => root.enochian_name === word)
+
+    // If it is, return the root
+    if (directRoot) {
+      return [{ letter: word, root: directRoot }]
     }
 
     // Regular word analysis

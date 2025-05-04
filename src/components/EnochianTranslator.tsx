@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, Check, Copy, X } from 'lucide-react'
+import { useCallback, useEffect } from 'react'
+import { AlertCircle, Check, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { Separator } from './ui/separator'
 import { Badge } from '@/components/ui/badge'

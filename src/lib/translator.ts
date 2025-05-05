@@ -221,6 +221,11 @@ export class Translator {
 
   // Check if the entire input is a phrase match
   private checkForPhraseMatch(text: string): TranslationResult | null {
+    // Skip phrase matching for single letter words - they should use letter roots
+    if (text.length === 1 && /^[a-z]$/i.test(text)) {
+      return null
+    }
+
     // Try direct match from the phrase map
     const exactPhraseMatch = this.phraseMap.get(text.toLowerCase())
     if (exactPhraseMatch) {
@@ -562,7 +567,7 @@ export class Translator {
       .slice(leadingPunct.length, originalWord.length - trailingPunct.length)
       .toLowerCase()
 
-    // Handle single-letter words specially (like "I", "a")
+    // Handle single-letter words like "I", "a"
     const singleLetterMatch = this.handleSingleLetterWord(word)
     if (singleLetterMatch) {
       const result = leadingPunct + singleLetterMatch.result + trailingPunct
@@ -704,24 +709,26 @@ export class Translator {
     explanation: string
   } | null {
     if (word.length === 1 && /[a-z]/i.test(word)) {
-      // Look for exact matches
-      const match = this.meaningToWordMap.get(word)
-      if (match) {
-        return {
-          result: match,
-          method: 'direct',
-          explanation: `Direct match found for single letter: "${word}" → "${match}"`,
-        }
-      }
-
-      // Using Enochian letter name, when there is no direct match
+      // For single letters, prioritize the Enochian letter name
       const root = this.findRootForLetter(word)
       if (root) {
-        return {
+        const result = {
           result: root.enochian_name,
-          method: 'constructed',
+          method: 'direct' as const,
           explanation: `Using Enochian letter name: "${word}" → "${root.enochian_name}" (${root.meaning.split(':')[0].trim()})`,
         }
+        return result
+      }
+
+      // Only if no root is found (which should not happen), try the lexicon
+      const match = this.meaningToWordMap.get(word)
+      if (match) {
+        const result = {
+          result: match,
+          method: 'direct' as const,
+          explanation: `Direct match found for single letter: "${word}" → "${match}"`,
+        }
+        return result
       }
     }
     return null
@@ -1047,6 +1054,12 @@ export class Translator {
       return word // Keep bracketed untranslated words as-is
     }
 
+    // Check if the entire word is an enochian name (from root table)
+    const asRootName = this.rootData.find((root) => root.enochian_name === word)
+    if (asRootName) {
+      return word // Return as-is, it's already a root name
+    }
+
     // Handle special case for negation prefix (G-)
     if (word.startsWith('G-')) {
       const prefix = 'Ged'
@@ -1069,6 +1082,12 @@ export class Translator {
   public convertToSymbols(word: string): string {
     if (word.startsWith('[') && word.endsWith(']')) {
       return word // Keep bracketed untranslated words as-is
+    }
+
+    // Check if the entire word is an enochian name (from root table)
+    const asRootName = this.rootData.find((root) => root.enochian_name === word)
+    if (asRootName) {
+      return asRootName.symbol // Return the symbol directly
     }
 
     // Handle special case for negation prefix (G-)

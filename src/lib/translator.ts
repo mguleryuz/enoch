@@ -993,14 +993,15 @@ export class Translator {
       // Skip untranslated words (already have brackets)
       if (enochianWord.startsWith('[')) return
 
-      // Check if this is a special case like "I" → "Gon"
       const originalWord = enochianToOriginal.get(enochianWord)
+      // Check if this is a special case like "I" → "Gon"
       const directRoot = this.rootData.find(
         (root) =>
           root.english_letter.toLocaleLowerCase() ===
           originalWord?.toLowerCase(),
       )
-      const isSpecialCase = !!directRoot
+      // has direct root and doesnt have a direct match in the lexicon
+      const isSpecialCase = !!directRoot && !originalWord
       const originalRoots = enochianToRoots.get(enochianWord)
 
       // Create regex to match the word with word boundaries
